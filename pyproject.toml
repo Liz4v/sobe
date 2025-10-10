@@ -1,16 +1,36 @@
 [project]
 name = "sobe"
-version = "0.1"
+version = "0.1.1"
 description = "AWS-based drop box uploader"
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Environment :: Console",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python",
+  "Topic :: Communications :: File Sharing",
+  "Topic :: Utilities",
+]
+authors = [
+  {name = "Liz Balbuena"},
+]
+license = "MIT"
 readme = "README.md"
 requires-python = "==3.13.*"
 dependencies = [
-    "boto3>=1.40.49",
-    "platformdirs>=4.5.0",
+  "boto3>=1.40.49",
+  "platformdirs>=4.5.0",
 ]
 
 [project.scripts]
 sobe = "sobe.main:main"
+
+[project.urls]
+Homepage = "https://github.com/Liz4v/sobe"
+Documentation = "https://github.com/Liz4v/sobe/blob/main/README.md"
+Repository = "https://github.com/Liz4v/sobe.git"
+Issues = "https://github.com/Liz4v/sobe/issues"
+Changelog = "https://github.com/Liz4v/sobe/releases"
 
 [tool.ruff]
 line-length = 120
@@ -21,5 +41,5 @@ build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
-    "ruff>=0.14.0",
+  "ruff>=0.14.0",
 ]
