@@ -20,23 +20,25 @@ def load_config():
     if path.exists():
         with path.open("rb") as f:
             payload = tomllib.load(f)
-            if payload["bucket"] != "example-bucket":
+            if payload.get("aws", {}).get("bucket", "example-bucket") != "example-bucket":
                 return payload
 
     defaults = """
         # sobe configuration
-        bucket = "example-bucket"
         url = "https://example.com/"
+
+        [aws]
+        bucket = "example-bucket"
         cloudfront = "E1111111111111"
 
-        [aws_session]
+        [aws.session]
         # If you already have AWS CLI set up, don't fill keys here.
         # region_name = "..."
         # profile_name = "..."
         # aws_access_key_id = "..."
         # aws_secret_access_key = "..."
 
-        [aws_client]
+        [aws.client]
         verify = true
     """
     defaults = "\n".join(line.strip() for line in defaults.lstrip().splitlines())
@@ -55,8 +57,9 @@ warnings.filterwarnings("ignore", category=urllib3.exceptions.InsecureRequestWar
 
 def main() -> None:
     args = parse_args()
-    session = boto3.Session(**CONFIG["aws_session"])
-    bucket = session.resource("s3", **CONFIG["aws_client"]).Bucket(CONFIG["bucket"])
+    session = boto3.Session(**CONFIG["aws"]["session"])
+    s3 = session.resource("s3", **CONFIG["aws"]["client"])
+    bucket = s3.Bucket(CONFIG["aws"]["bucket"])  # type: ignore
     for path, key in zip(args.paths, args.keys):
         if args.delete:
             delete(bucket, key)
@@ -90,16 +93,16 @@ def delete(bucket, remote_path: str) -> None:
 def invalidate(session: boto3.Session) -> None:
     write("Clearing cache ...")
     ref = datetime.datetime.now().astimezone().isoformat()
-    cloudfront = session.client("cloudfront", **CONFIG["aws_client"])
+    cloudfront = session.client("cloudfront", **CONFIG["aws"]["client"])
     batch = {"Paths": {"Quantity": 1, "Items": ["/*"]}, "CallerReference": ref}
-    invalidation = cloudfront.create_invalidation(DistributionId=CONFIG["cloudfront"], InvalidationBatch=batch)
+    invalidation = cloudfront.create_invalidation(DistributionId=CONFIG["aws"]["cloudfront"], InvalidationBatch=batch)
     write("ok.")
     invalidation_id = invalidation["Invalidation"]["Id"]
     status = ""
     while status != "Completed":
         time.sleep(3)
         write(".")
-        response = cloudfront.get_invalidation(DistributionId=CONFIG["cloudfront"], Id=invalidation_id)
+        response = cloudfront.get_invalidation(DistributionId=CONFIG["aws"]["cloudfront"], Id=invalidation_id)
         status = response["Invalidation"]["Status"]
     print("complete.")
 
@@ -135,8 +138,8 @@ def parse_args() -> argparse.Namespace:
 
 
 def dump_policy() -> None:
-    session = boto3.Session(**CONFIG["aws_session"])
-    sts = session.client("sts", **CONFIG["aws_client"])
+    session = boto3.Session(**CONFIG["aws"]["session"])
+    sts = session.client("sts", **CONFIG["aws"]["client"])
     caller = sts.get_caller_identity()["Arn"]
     account_id = caller.split(":")[4]
     actions = """
@@ -144,9 +147,9 @@ def dump_policy() -> None:
         cloudfront:CreateInvalidation cloudfront:GetInvalidation
     """.split()
     resources = [
-        f"arn:aws:s3:::{CONFIG['bucket']}",
-        f"arn:aws:s3:::{CONFIG['bucket']}/*",
-        f"arn:aws:cloudfront::{account_id}:distribution/{CONFIG['cloudfront']}",
+        f"arn:aws:s3:::{CONFIG['aws']['bucket']}",
+        f"arn:aws:s3:::{CONFIG['aws']['bucket']}/*",
+        f"arn:aws:cloudfront::{account_id}:distribution/{CONFIG['aws']['cloudfront']}",
     ]
     statement = {"Effect": "Allow", "Action": actions, "Resource": resources}
     policy = {"Version": "2012-10-17", "Statement": [statement]}

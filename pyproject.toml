@@ -1,6 +1,6 @@
 [project]
 name = "sobe"
-version = "0.1.1"
+version = "0.2"
 description = "AWS-based drop box uploader"
 classifiers = [
   "Development Status :: 5 - Production/Stable",
