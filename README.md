@@ -9,7 +9,7 @@ It will upload any files you give it to your bucket, in a current year subdirect
 Use [uv](https://docs.astral.sh/uv/) to manage it.
 
 ```bash
-uv tool install https://github.com/Liz4v/sobe.git
+uv tool install sobe
 ```
 
 ## Configuration
