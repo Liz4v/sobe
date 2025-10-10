@@ -1,0 +1,64 @@
+name: Publish to PyPI
+# https://docs.pypi.org/trusted-publishers/
+
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.([0-9]+)?'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write  # Needed for OIDC token request
+
+jobs:
+  build-and-publish:
+    name: Build and Publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          uv --version
+
+      - name: Validate tag matches version
+        if: startsWith(github.ref, 'refs/tags/')
+        run: uv run scripts/validate_version.py
+
+      - name: Build distribution
+        run: uv build --wheel --sdist
+
+      - name: Inspect dist artifacts
+        run: ls -l dist
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          skip-existing: true
+
+  # Optional job to publish a GitHub release when tagging
+  release:
+    name: Create GitHub Release
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    needs: build-and-publish
+    steps:
+      - name: Generate Release Notes
+        id: notes
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const tag = process.env.GITHUB_REF.split('/').pop();
+            core.setOutput('body', `Release ${tag}\n\nAutomated publication to PyPI.`);
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body: ${{ steps.notes.outputs.body }}
+          name: ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}

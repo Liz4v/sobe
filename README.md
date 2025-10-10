@@ -1,8 +1,8 @@
 # sobe
 
-A simple command-line tool for uploading files to an AWS S3 bucket that is publicly available through a CloudFront distribution.
+A simple command-line tool for uploading files to an AWS S3 bucket that is publicly available through a CloudFront distribution. This is the traditional "drop box" use case that existed long before the advent of modern file sharing services.
 
-It will upload any files you give it to your bucket, in a current year subdirectory.
+It will upload any files you give it to your bucket, in a current year subdirectory, because that's the only easy way to organize chaos.
 
 ## Installation
 

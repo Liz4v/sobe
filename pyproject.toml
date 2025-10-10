@@ -1,7 +1,7 @@
 [project]
 name = "sobe"
-version = "25.0"
-description = "AWS-based Dropbox Uploader"
+version = "1.0"
+description = "AWS-based drop box uploader"
 readme = "README.md"
 requires-python = "==3.13.*"
 dependencies = [
