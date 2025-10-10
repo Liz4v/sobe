@@ -105,7 +105,7 @@ def invalidate(session: boto3.Session) -> None:
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Upload files to your AWS dropbox.")
+    parser = argparse.ArgumentParser(description="Upload files to your AWS drop box.")
     parser.add_argument("-y", "--year", type=int, default=datetime.date.today().year, help="change year directory")
     parser.add_argument("-i", "--invalidate", action="store_true", help="invalidate CloudFront cache")
     parser.add_argument("-d", "--delete", action="store_true", help="delete instead of upload")
