@@ -1,0 +1,25 @@
+[project]
+name = "sobe"
+version = "25.0"
+description = "AWS-based Dropbox Uploader"
+readme = "README.md"
+requires-python = "==3.13.*"
+dependencies = [
+    "boto3>=1.40.49",
+    "platformdirs>=4.5.0",
+]
+
+[project.scripts]
+sobe = "sobe.main:main"
+
+[tool.ruff]
+line-length = 120
+
+[build-system]
+requires = ["uv_build"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.14.0",
+]
