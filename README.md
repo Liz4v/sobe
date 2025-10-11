@@ -12,6 +12,12 @@ Use [uv](https://docs.astral.sh/uv/) to manage it.
 uv tool install sobe
 ```
 
+If you have Python ≥ 3.11, you can also install it via pip:
+
+```bash
+pip install sobe
+```
+
 ## Configuration
 
 On first run, `sobe` will create its config file as appropriate to the platform. You'll need to edit this file with your AWS bucket and CloudFront details:

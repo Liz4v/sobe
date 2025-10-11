@@ -8,6 +8,9 @@ classifiers = [
   "License :: OSI Approved :: MIT License",
   "Operating System :: OS Independent",
   "Programming Language :: Python",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
   "Topic :: Communications :: File Sharing",
   "Topic :: Utilities",
 ]
@@ -16,7 +19,7 @@ authors = [
 ]
 license = "MIT"
 readme = "README.md"
-requires-python = "==3.13.*"
+requires-python = ">=3.11"
 dependencies = [
   "boto3>=1.40.49",
   "platformdirs>=4.5.0",
