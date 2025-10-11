@@ -4,6 +4,8 @@ A simple command-line tool for uploading files to an AWS S3 bucket that is publi
 
 It will upload any files you give it to your bucket, in a current year subdirectory, because that's the only easy way to organize chaos.
 
+"Sobe" is Portuguese for "go up" (in the imperative), as in "upload".
+
 ## Installation
 
 Use [uv](https://docs.astral.sh/uv/) to manage it.
