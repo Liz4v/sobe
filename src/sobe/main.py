@@ -17,7 +17,6 @@ warnings.filterwarnings("ignore", category=urllib3.exceptions.InsecureRequestWar
 
 
 def main() -> None:
-    args = parse_args()
     try:
         config = load_config()
     except MustEditConfig as err:
@@ -25,6 +24,7 @@ def main() -> None:
         print(err.path)
         raise SystemExit(1) from err
 
+    args = parse_args()
     aws = AWS(config.aws)
 
     if args.policy:
@@ -49,31 +49,39 @@ def main() -> None:
 def parse_args(argv=None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Upload files to your AWS drop box.")
     parser.add_argument("-y", "--year", type=str, help="change year directory")
-    parser.add_argument("-i", "--invalidate", action="store_true", help="invalidate CloudFront cache")
+    parser.add_argument("-l", "--list", action="store_true", help="list all files in the year")
     parser.add_argument("-d", "--delete", action="store_true", help="delete instead of upload")
+    parser.add_argument("-i", "--invalidate", action="store_true", help="invalidate CloudFront cache")
     parser.add_argument("-p", "--policy", action="store_true", help="generate IAM policy requirements and exit")
     parser.add_argument("files", nargs="*", help="Source files.")
     args = parser.parse_args(argv)
+    num_arg_types = sum(map(bool, args.__dict__.values()))
+
+    if num_arg_types == 0:
+        parser.print_help()
+        raise SystemExit(0)
 
     if args.policy:
-        if args.year or args.delete or args.invalidate or args.files:
+        if num_arg_types != 1:
             parser.error("--policy cannot be used with other arguments")
         return args
 
     if args.year is None:
         args.year = datetime.date.today().year
-    elif not args.files:
-        parser.error("--year requires files to be specified")
+    elif not (args.files or args.list):
+        parser.error("--year requires files or --list to be specified")
 
-    if args.delete and not args.files:
-        parser.error("--delete requires files to be specified")
-
-    if not args.files and not args.invalidate:
-        parser.print_help()
-        raise SystemExit(0)
+    if args.list:
+        if args.delete:
+            parser.error("--list and --delete cannot be used at the same time")
+        if args.files:
+            parser.error("--list does not support file filtering yet")
+    elif args.delete:
+        if not args.files:
+            parser.error("--delete requires files to be specified")
 
     args.paths = [pathlib.Path(p) for p in args.files]
-    if not args.delete:
+    if not (args.delete or args.list):
         missing = [p for p in args.paths if not p.exists()]
         if missing:
             print("The following files do not exist:")
