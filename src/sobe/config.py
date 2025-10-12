@@ -54,7 +54,7 @@ verify = true
 
 
 def load_config() -> Config:
-    path = PlatformDirs("sobe", "balbuena.ca").user_config_path / "config.toml"
+    path = PlatformDirs("sobe").user_config_path / "config.toml"
     if path.exists():
         with path.open("rb") as f:
             payload = tomllib.load(f)

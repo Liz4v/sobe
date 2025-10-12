@@ -39,7 +39,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("-y", "--year", type=int, default=datetime.date.today().year, help="change year directory")
     parser.add_argument("-i", "--invalidate", action="store_true", help="invalidate CloudFront cache")
     parser.add_argument("-d", "--delete", action="store_true", help="delete instead of upload")
-    parser.add_argument("--policy", action="store_true", help="generate IAM policy requirements and exit")
+    parser.add_argument("-p", "--policy", action="store_true", help="generate IAM policy requirements and exit")
     parser.add_argument("files", nargs="*", help="Source files.")
     args = parser.parse_args()
 
