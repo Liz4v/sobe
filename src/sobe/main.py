@@ -18,6 +18,10 @@ def main() -> None:
     args = parse_args()
     aws = AWS(CONFIG.aws)
 
+    if args.policy:
+        print(aws.generate_needed_permissions())
+        return
+
     for path in args.paths:
         write(f"{CONFIG.url}{args.year}/{path.name} ...")
         if args.delete:
@@ -45,10 +49,7 @@ def parse_args() -> argparse.Namespace:
     if args.policy:
         if args.year or args.delete or args.invalidate or args.files:
             parser.error("--policy cannot be used with other arguments")
-
-        aws = AWS(CONFIG.aws)
-        print(aws.generate_needed_permissions())
-        raise SystemExit(0)
+        return args
 
     if args.year is None:
         args.year = datetime.date.today().year
