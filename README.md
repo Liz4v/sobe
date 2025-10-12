@@ -27,7 +27,9 @@ On first run, `sobe` will create its config file as appropriate to the platform.
 ```bash
 $ uv run sobe
 Created config file at the path below. You must edit it before use.
-C:\Users\So-and-so\AppData\Roaming\sobe
+C:\Users\So-and-so\AppData\Roaming\sobe            (on Windows)
+/home/so-and-so/.config/sobe                       (on Linux)
+/Users/So-and-so/Library/Application Support/sobe  (on Mac)
 ```
 
 Here's a minimal set up.
@@ -47,7 +49,8 @@ sobe -i
 sobe -p
 ```
 
-- `-y`, `--year`: Change the target year directory (default: current year)
+- `-h`, `--help`: Display help message.
+- `-y`, `--year`: Change year directory (default: current year)
 - `-i`, `--invalidate`: Invalidate CloudFront cache after upload
 - `-d`, `--delete`: Delete files instead of uploading
 - `-p`, `--policy`: Display required AWS IAM policy and exit

@@ -7,8 +7,8 @@ import warnings
 
 import urllib3.exceptions
 
-from .aws import AWS
-from .config import CONFIG
+from sobe.aws import AWS
+from sobe.config import CONFIG
 
 write = functools.partial(print, flush=True, end="")
 print = functools.partial(print, flush=True)  # type: ignore
@@ -36,7 +36,7 @@ def main() -> None:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Upload files to your AWS drop box.")
-    parser.add_argument("-y", "--year", type=int, default=datetime.date.today().year, help="change year directory")
+    parser.add_argument("-y", "--year", default=datetime.date.today().year, help="change year directory")
     parser.add_argument("-i", "--invalidate", action="store_true", help="invalidate CloudFront cache")
     parser.add_argument("-d", "--delete", action="store_true", help="delete instead of upload")
     parser.add_argument("-p", "--policy", action="store_true", help="generate IAM policy requirements and exit")

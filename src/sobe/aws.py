@@ -7,7 +7,7 @@ import time
 import boto3
 import botocore.exceptions
 
-from .config import AWSConfig
+from sobe.config import AWSConfig
 
 
 class AWS:
