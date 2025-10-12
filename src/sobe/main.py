@@ -2,7 +2,6 @@ import argparse
 import datetime
 import functools
 import pathlib
-import sys
 import warnings
 
 import urllib3.exceptions
@@ -36,7 +35,7 @@ def main() -> None:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Upload files to your AWS drop box.")
-    parser.add_argument("-y", "--year", default=datetime.date.today().year, help="change year directory")
+    parser.add_argument("-y", "--year", type=str, help="change year directory")
     parser.add_argument("-i", "--invalidate", action="store_true", help="invalidate CloudFront cache")
     parser.add_argument("-d", "--delete", action="store_true", help="delete instead of upload")
     parser.add_argument("-p", "--policy", action="store_true", help="generate IAM policy requirements and exit")
@@ -44,13 +43,24 @@ def parse_args() -> argparse.Namespace:
     args = parser.parse_args()
 
     if args.policy:
+        if args.year or args.delete or args.invalidate or args.files:
+            parser.error("--policy cannot be used with other arguments")
+
         aws = AWS(CONFIG.aws)
         print(aws.generate_needed_permissions())
-        sys.exit(0)
+        raise SystemExit(0)
+
+    if args.year is None:
+        args.year = datetime.date.today().year
+    elif not args.files:
+        parser.error("--year requires files to be specified")
+
+    if args.delete and not args.files:
+        parser.error("--delete requires files to be specified")
 
     if not args.files and not args.invalidate:
         parser.print_help()
-        sys.exit(0)
+        raise SystemExit(0)
 
     args.paths = [pathlib.Path(p) for p in args.files]
     if not args.delete:
@@ -59,6 +69,6 @@ def parse_args() -> argparse.Namespace:
             print("The following files do not exist:")
             for p in missing:
                 print(f"  {p}")
-            sys.exit(1)
+            raise SystemExit(1)
 
     return args
