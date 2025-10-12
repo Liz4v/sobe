@@ -1,3 +1,5 @@
+"""Command-line interface entry point: input validation and output to user."""
+
 import argparse
 import datetime
 import functools
@@ -7,7 +9,7 @@ import warnings
 import urllib3.exceptions
 
 from sobe.aws import AWS
-from sobe.config import CONFIG
+from sobe.config import MustEditConfig, load_config
 
 write = functools.partial(print, flush=True, end="")
 print = functools.partial(print, flush=True)  # type: ignore
@@ -16,14 +18,21 @@ warnings.filterwarnings("ignore", category=urllib3.exceptions.InsecureRequestWar
 
 def main() -> None:
     args = parse_args()
-    aws = AWS(CONFIG.aws)
+    try:
+        config = load_config()
+    except MustEditConfig as err:
+        print("Created config file at the path below. You must edit it before use.")
+        print(err.path)
+        raise SystemExit(1) from err
+
+    aws = AWS(config.aws)
 
     if args.policy:
         print(aws.generate_needed_permissions())
         return
 
     for path in args.paths:
-        write(f"{CONFIG.url}{args.year}/{path.name} ...")
+        write(f"{config.url}{args.year}/{path.name} ...")
         if args.delete:
             existed = aws.delete(args.year, path.name)
             print("deleted." if existed else "didn't exist.")
@@ -37,14 +46,14 @@ def main() -> None:
         print("complete.")
 
 
-def parse_args() -> argparse.Namespace:
+def parse_args(argv=None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Upload files to your AWS drop box.")
     parser.add_argument("-y", "--year", type=str, help="change year directory")
     parser.add_argument("-i", "--invalidate", action="store_true", help="invalidate CloudFront cache")
     parser.add_argument("-d", "--delete", action="store_true", help="delete instead of upload")
     parser.add_argument("-p", "--policy", action="store_true", help="generate IAM policy requirements and exit")
     parser.add_argument("files", nargs="*", help="Source files.")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     if args.policy:
         if args.year or args.delete or args.invalidate or args.files:

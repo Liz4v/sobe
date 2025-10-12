@@ -3,26 +3,26 @@ name = "sobe"
 version = "0.2"
 description = "AWS-based drop box uploader"
 classifiers = [
-  "Development Status :: 5 - Production/Stable",
-  "Environment :: Console",
-  "License :: OSI Approved :: MIT License",
-  "Operating System :: OS Independent",
-  "Programming Language :: Python",
-  "Programming Language :: Python :: 3.11",
-  "Programming Language :: Python :: 3.12",
-  "Programming Language :: Python :: 3.13",
-  "Topic :: Communications :: File Sharing",
-  "Topic :: Utilities",
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Communications :: File Sharing",
+    "Topic :: Utilities",
 ]
 authors = [
-  {name = "Liz Balbuena"},
+    { name = "Liz Balbuena" },
 ]
 license = "MIT"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-  "boto3>=1.40.49",
-  "platformdirs>=4.5.0",
+    "boto3>=1.40.49",
+    "platformdirs>=4.5.0",
 ]
 
 [project.scripts]
@@ -38,11 +38,35 @@ Changelog = "https://github.com/Liz4v/sobe/releases"
 [tool.ruff]
 line-length = 120
 
+[tool.isort]
+profile = "black"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--cov=src/sobe",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+    "--cov-fail-under=95",
+    "--strict-markers",
+    "-v",
+]
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests",
+    "slow: Slow running tests",
+]
+
 [build-system]
 requires = ["uv_build"]
 build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
-  "ruff>=0.14.0",
+    "pytest>=8.4.2",
+    "pytest-cov>=7.0.0",
+    "ruff>=0.14.0",
 ]

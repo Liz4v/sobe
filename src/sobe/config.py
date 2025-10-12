@@ -1,4 +1,7 @@
+"""Everything related to user configuration file."""
+
 import tomllib
+from pathlib import Path
 from typing import Any, NamedTuple, Self
 
 from platformdirs import PlatformDirs
@@ -32,6 +35,13 @@ class Config(NamedTuple):
         )
 
 
+class MustEditConfig(Exception):
+    """Config file must be edited before this tool can be used."""
+
+    def __init__(self, path: Path):
+        self.path = path
+
+
 DEFAULT_TEMPLATE = """
 # sobe configuration
 
@@ -62,12 +72,6 @@ def load_config() -> Config:
                 return Config.from_dict(payload)
 
     # create default file and exit for user to customize
-    defaults = "\n".join(line.strip() for line in DEFAULT_TEMPLATE.lstrip().splitlines())
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(defaults)
-    print("Created config file at the path below. You must edit it before use.")
-    print(path)
-    raise SystemExit(1)
-
-
-CONFIG: Config = load_config()
+    path.write_text(DEFAULT_TEMPLATE.lstrip())
+    raise MustEditConfig(path)

@@ -1,3 +1,5 @@
+"""Everything related to AWS. In the future, we may support other cloud providers."""
+
 import datetime
 import json
 import mimetypes
@@ -31,7 +33,7 @@ class AWS:
             obj.load()
             obj.delete()
             return True
-        except botocore.exceptions.ClientError as e:  # pragma: no cover - network edge
+        except botocore.exceptions.ClientError as e:
             if e.response.get("Error", {}).get("Code") == "404":
                 return False
             raise
@@ -44,7 +46,7 @@ class AWS:
         response = self._cloudfront.create_invalidation(DistributionId=distribution, InvalidationBatch=batch)
         invalidation = response["Invalidation"]["Id"]
         status = "Created"
-        while status != "Completed":  # pragma: no cover - polling side effect
+        while status != "Completed":
             yield status
             time.sleep(3)
             response = self._cloudfront.get_invalidation(DistributionId=distribution, Id=invalidation)
@@ -55,7 +57,7 @@ class AWS:
         try:
             sts = self._session.client("sts", **self.config.service)
             account_id = sts.get_caller_identity()["Account"]
-        except botocore.exceptions.ClientError:  # pragma: no cover - network edge
+        except botocore.exceptions.ClientError:
             account_id = "YOUR_ACCOUNT_ID"
 
         actions = """
