@@ -38,9 +38,6 @@ Changelog = "https://github.com/Liz4v/sobe/releases"
 [tool.ruff]
 line-length = 120
 
-[tool.isort]
-profile = "black"
-
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
@@ -66,7 +63,10 @@ build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
+    "furo>=2024.8.6",
     "pytest>=8.4.2",
     "pytest-cov>=7.0.0",
     "ruff>=0.14.0",
+    "sphinx>=7.0.0",
+    "sphinx-autodoc-typehints>=2.0.0",
 ]
