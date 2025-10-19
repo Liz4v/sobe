@@ -33,13 +33,7 @@ Basic upload of files for the current year::
   https://example.com/2025/file1.txt ...ok.
   https://example.com/2025/image.png ...ok.
 
-Specify a different directory ("year") value. It can be:
-
-* A plain year like ``2024``
-* A nested path like ``a/b/c``
-* An empty string (``''``) to use root
-
-Some examples::
+Specify a different directory ("year") value. It can be anything. Some examples::
 
   $ sobe --year 2024 file1.txt
   https://example.com/2024/file1.txt ...ok.
@@ -52,6 +46,11 @@ Some examples::
 
   $ sobe --year '' index.html
   https://example.com/index.html ...ok.
+
+Override the detected MIME type for a file (force a specific ``Content-Type`` header)::
+
+  $ sobe --content-type application/x-custom data.bin
+  https://example.com/2025/data.bin ...ok.
 
 Delete files instead of uploading::
 

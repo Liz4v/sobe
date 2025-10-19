@@ -46,7 +46,7 @@ def main() -> None:
             existed = aws.delete(args.prefix, path.name)
             print("deleted." if existed else "didn't exist.")
         else:
-            aws.upload(args.prefix, path)
+            aws.upload(args.prefix, path, content_type=args.content_type )
             print("ok.")
     if args.invalidate:
         write("Clearing cache...")
@@ -58,6 +58,7 @@ def main() -> None:
 def parse_args(argv=None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Upload files to your AWS drop box.")
     parser.add_argument("-y", "--year", type=str, help="set remote directory (usually a year)")
+    parser.add_argument("-t", "--content-type", type=str, help="override detected MIME type for uploaded files")
     parser.add_argument("-l", "--list", action="store_true", help="list all files in the year")
     parser.add_argument("-d", "--delete", action="store_true", help="delete instead of upload")
     parser.add_argument("-i", "--invalidate", action="store_true", help="invalidate CloudFront cache")
@@ -79,10 +80,14 @@ def parse_args(argv=None) -> argparse.Namespace:
         args.year = str(datetime.date.today().year)
     elif not (args.files or args.list):
         parser.error("--year requires files or --list to be specified")
-
     args.prefix = args.year if args.year == "" or args.year.endswith("/") else f"{args.year}/"
 
-    if args.list:
+    if args.content_type:
+        if args.delete or args.list:
+            parser.error("--content-type cannot be used with --delete or --list")
+        if not args.files:
+            parser.error("--content-type requires files to be specified")
+    elif args.list:
         if args.delete:
             parser.error("--list and --delete cannot be used at the same time")
         if args.files:

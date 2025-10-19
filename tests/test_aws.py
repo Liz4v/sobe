@@ -64,6 +64,22 @@ class TestAWS:
             str(test_file), f"2025/{test_file.name}", ExtraArgs={"ContentType": "text/plain"}
         )
 
+    def test_upload_with_forced_content_type(self):
+        mock_session, mock_bucket, _ = mock_boto_session()
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=True) as f:
+            f.write("test content")
+            test_file = pathlib.Path(f.name)
+
+            with patch("sobe.aws.boto3.Session") as mock_session_class:
+                mock_session_class.return_value = mock_session
+                aws = AWS(self.config)
+                aws.upload("2025/", test_file, content_type="application/x-custom")
+
+        mock_bucket.upload_file.assert_called_once_with(
+            str(test_file), f"2025/{test_file.name}", ExtraArgs={"ContentType": "application/x-custom"}
+        )
+
     @patch("sobe.aws.mimetypes.guess_type")
     def test_upload_with_unknown_mime_type(self, mock_guess_type):
         mock_guess_type.return_value = (None, None)

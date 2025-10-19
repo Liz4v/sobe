@@ -20,10 +20,12 @@ class AWS:
         self._bucket = self._s3_resource.Bucket(self.config.bucket)  # type: ignore[attr-defined]
         self._cloudfront = self._session.client("cloudfront", **self.config.service)
 
-    def upload(self, prefix: str, local_path: pathlib.Path) -> None:
-        """Uploads a file."""
-        type_guess, _ = mimetypes.guess_type(local_path)
-        extra_args = {"ContentType": type_guess or "application/octet-stream"}
+    def upload(self, prefix: str, local_path: pathlib.Path, *, content_type: str | None = None) -> None:
+        """Upload a file."""
+        if not content_type:
+            type_guess, _ = mimetypes.guess_type(local_path)
+            content_type = type_guess or "application/octet-stream"
+        extra_args = {"ContentType": content_type}
         self._bucket.upload_file(str(local_path), f"{prefix}{local_path.name}", ExtraArgs=extra_args)
 
     def delete(self, prefix: str, remote_filename: str) -> bool:
