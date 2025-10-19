@@ -431,6 +431,15 @@ wheels = [
 ]
 
 [[package]]
+name = "puremagic"
+version = "1.30"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/dd/7f/9998706bc516bdd664ccf929a1da6c6e5ee06e48f723ce45aae7cf3ff36e/puremagic-1.30.tar.gz", hash = "sha256:f9ff7ac157d54e9cf3bff1addfd97233548e75e685282d84ae11e7ffee1614c9", size = 314785, upload-time = "2025-07-04T18:48:36.061Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/91/ed/1e347d85d05b37a8b9a039ca832e5747e1e5248d0bd66042783ef48b4a37/puremagic-1.30-py3-none-any.whl", hash = "sha256:5eeeb2dd86f335b9cfe8e205346612197af3500c6872dffebf26929f56e9d3c1", size = 43304, upload-time = "2025-07-04T18:48:34.801Z" },
+]
+
+[[package]]
 name = "pygments"
 version = "2.19.2"
 source = { registry = "https://pypi.org/simple" }
@@ -568,6 +577,7 @@ source = { editable = "." }
 dependencies = [
     { name = "boto3" },
     { name = "platformdirs" },
+    { name = "puremagic" },
 ]
 
 [package.optional-dependencies]
@@ -589,6 +599,7 @@ requires-dist = [
     { name = "boto3", specifier = ">=1.40.49" },
     { name = "furo", marker = "extra == 'docs'", specifier = ">=2024.8.6" },
     { name = "platformdirs", specifier = ">=4.5.0" },
+    { name = "puremagic", specifier = ">=1.30" },
     { name = "sphinx", marker = "extra == 'docs'", specifier = ">=7.0.0" },
     { name = "sphinx-autodoc-typehints", marker = "extra == 'docs'", specifier = ">=2.0.0" },
 ]

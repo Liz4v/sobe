@@ -2,7 +2,6 @@
 
 import datetime
 import json
-import mimetypes
 import pathlib
 import time
 
@@ -22,10 +21,7 @@ class AWS:
 
     def upload(self, prefix: str, local_path: pathlib.Path, *, content_type: str | None = None) -> None:
         """Upload a file."""
-        if not content_type:
-            type_guess, _ = mimetypes.guess_type(local_path)
-            content_type = type_guess or "application/octet-stream"
-        extra_args = {"ContentType": content_type}
+        extra_args = {"ContentType": content_type or guess_content_type(local_path)}
         self._bucket.upload_file(str(local_path), f"{prefix}{local_path.name}", ExtraArgs=extra_args)
 
     def delete(self, prefix: str, remote_filename: str) -> bool:
@@ -89,3 +85,24 @@ class AWS:
         statement = {"Effect": "Allow", "Action": actions, "Resource": resources}
         policy = {"Version": "2012-10-17", "Statement": [statement]}
         return json.dumps(policy, indent=2)
+
+
+def guess_content_type(path: pathlib.Path) -> str:
+    """Return a guessed content type for the given file."""
+    import mimetypes
+
+    # Guess based on filename using standard library
+    guess, _ = mimetypes.guess_type(path.name)
+    if guess:
+        return guess
+
+    import puremagic
+
+    # Guess based on file content using puremagic
+    for result in puremagic.magic_file(path):  # result is ordered by confidence
+        guess = getattr(result, "mime_type", None)
+        if guess:
+            return guess
+
+    # Fallback
+    return "application/octet-stream"
