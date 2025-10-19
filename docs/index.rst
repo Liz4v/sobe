@@ -3,7 +3,11 @@
 Welcome to sobe's documentation!
 ================================
 
-``sobe`` is a small command-line tool to upload files to an AWS S3 bucket and optionally invalidate a CloudFront distribution.
+A simple command-line tool to upload files to an AWS S3 bucket that is publicly available through a CloudFront distribution. This is the traditional "drop box" use case that existed long before the advent of modern file sharing services.
+
+It will upload any files you give it to your bucket, in a current year subdirectory, because that's the only easy way to organize chaos.
+
+"Sobe" is Portuguese for "take it up" (in the imperative), as in "upload".
 
 Contents:
 
@@ -18,13 +22,12 @@ Contents:
    :maxdepth: 2
    :caption: Reference
 
+   api/cli
    api/config
    api/aws
-   api/cli
 
 Indices and tables
 ==================
 
-* :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`

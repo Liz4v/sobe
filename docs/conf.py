@@ -3,7 +3,7 @@ from __future__ import annotations
 import importlib.metadata
 import os
 import sys
-from datetime import datetime
+from datetime import date
 from pathlib import Path
 
 # -- Path setup --------------------------------------------------------------
@@ -13,7 +13,7 @@ sys.path.insert(0, str(SRC))
 
 project = "sobe"
 author = "Liz Balbuena"
-copyright = f"{datetime.now():%Y}, {author}"
+copyright = f"{date.today():%Y}, {author}"
 try:
     version = importlib.metadata.version(project)
 except importlib.metadata.PackageNotFoundError:
@@ -53,13 +53,4 @@ html_theme_options = {
 }
 
 # -- Extensions configuration ------------------------------------------------
-# Fail on warnings in CI (Read the Docs sets READTHEDOCS env variable)
-if os.getenv("READTHEDOCS"):
-    nitpicky = True
-
-# -- Custom substitutions ----------------------------------------------------
-
-rst_prolog = """
-.. |project| replace:: sobe
-.. |pkg| replace:: sobe
-"""
+nitpicky = True

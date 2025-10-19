@@ -59,7 +59,7 @@ cloudfront = "E1111111111111"
 # aws_secret_access_key = "..."
 
 [aws.service]
-verify = true
+# verify = true
 """
 
 

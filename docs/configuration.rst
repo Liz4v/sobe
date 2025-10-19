@@ -15,7 +15,7 @@ Typically the path looks like:
 Template
 --------
 
-Default template contents:
+Here's a minimal configuration template:
 
 .. code-block:: toml
 
@@ -34,7 +34,7 @@ Default template contents:
    # aws_secret_access_key = "..."
 
    [aws.service]
-   verify = true
+   # verify = true
 
 Editing Guidance
 ----------------
@@ -42,7 +42,12 @@ Editing Guidance
 * ``url``: The public base URL for your uploads.
 * ``aws.bucket``: Your target S3 bucket name.
 * ``aws.cloudfront``: Distribution ID used for full-path invalidations.
-* ``aws.session``: Values passed to ``boto3.Session`` (often you can leave this empty if you have AWS CLI config set up).
-* ``aws.service``: Extra options passed to each client/resource creation (e.g. ``verify = true`` to enforce TLS certificate verification).
+* ``aws.session``: Dictionary of values passed to :class:`boto3.session.Session`.
+
+  * You can put credentials and region here.
+  * If you already have AWS CLI config set up with these settings, you can leave this empty.
+  * Here's the documentation of all possible parameters: :class:`boto3.session.Session`
+
+* ``aws.service``: Dictionary of extra options passed to each client/resource creation. Useful to manage TLS certificate settings.
 
 Once edited, re-run the command. If the bucket still matches the placeholder name the tool will recreate/overwrite the template and exit again.

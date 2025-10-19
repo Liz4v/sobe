@@ -4,13 +4,21 @@ Usage
 Installation
 ------------
 
-Install using uv::
+Use uv_ to manage it::
 
-  uv tool install sobe
+  $ uv tool install sobe
 
-Or, if you have Python ≥3.11, use pip::
+If you have Python ≥ 3.11, you can also install it via pip::
 
-  pip install sobe
+  $ pip install sobe
+
+Run it once to create a default configuration file::
+
+  $ sobe
+  Created config file at the path below. You must edit it before use.
+  /home/username/.config/sobe/config.toml
+
+Edit the configuration file as described in the Configuration_ section, then re-run the command.
 
 Command-line Interface
 ----------------------
@@ -41,7 +49,7 @@ Invalidate CloudFront cache::
   $ sobe --invalidate
   Clearing cache......complete.
 
-You can invalidate after uploads::
+You can invalidate after other operations::
 
   $ sobe --invalidate file1.txt
   https://example.com/2025/file1.txt ...ok.
@@ -71,3 +79,6 @@ Generate the minimal IAM policy required for this tool::
       }
     ]
   }
+
+.. _uv: https://docs.astral.sh/uv/
+.. _Configuration: configuration.html
