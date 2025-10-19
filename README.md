@@ -1,6 +1,10 @@
 # sobe
 
+[![Documentation Status](https://readthedocs.org/projects/sobe/badge/?version=latest)](https://sobe.readthedocs.io/en/latest/)
+
 A simple command-line tool to upload files to an AWS S3 bucket that is publicly available through a CloudFront distribution. This is the traditional "drop box" use case that existed long before the advent of modern file sharing services.
+
+Full documentation: https://sobe.readthedocs.io/en/latest/
 
 It will upload any files you give it to your bucket, in a current year subdirectory, because that's the only easy way to organize chaos.
 
@@ -33,6 +37,8 @@ bucket = "your-bucket-name"
 cloudfront = "your-cloudfront-distribution-id"
 ```
 
+[More information in the docs.](https://sobe.readthedocs.io/en/latest/configuration.html)
+
 ## Usage
 
 The basic example is uploading files to current year directory:
@@ -42,7 +48,7 @@ https://example.com/2025/file1.jpg ...ok.
 https://example.com/2025/file2.pdf ...ok.
 ```
 
-You can call it with `--help` for all available options. You can delete files, clear the CloudFront cache (cached objects stay for 1 day by default), tweak the upload year. The documentation contains better examples.
+You can call it with `--help` for all available options. You can delete files, clear the CloudFront cache (cached objects stay for 1 day by default), tweak the upload year. [The documentation contains better examples.](https://sobe.readthedocs.io/en/latest/usage.html#command-line-interface)
 
 ## License
 

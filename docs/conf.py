@@ -1,7 +1,4 @@
-from __future__ import annotations
-
 import importlib.metadata
-import os
 import sys
 from datetime import date
 from pathlib import Path
@@ -13,7 +10,7 @@ sys.path.insert(0, str(SRC))
 
 project = "sobe"
 author = "Liz Balbuena"
-copyright = f"{date.today():%Y}, {author}"
+copyright = f"{date.today().year}, {author}"
 try:
     version = importlib.metadata.version(project)
 except importlib.metadata.PackageNotFoundError:
