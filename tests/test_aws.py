@@ -230,10 +230,8 @@ class TestAWS:
         obj3 = Mock()
         obj3.key = "2025/file2.txt"  # yes
         obj4 = Mock()
-        obj4.key = "2025/subdir/"  # yes (subdir placeholder)
-        obj5 = Mock()
-        obj5.key = "2025/subdir/file3.txt"  # no (recursive entry)
-        mock_bucket.objects.filter.return_value = [obj1, obj2, obj3, obj4, obj5]
+        obj4.key = "2025/subdir/file3.txt"  # yes, but as subdir/
+        mock_bucket.objects.filter.return_value = [obj1, obj2, obj3, obj4]
 
         with patch("sobe.aws.boto3.Session") as mock_session_class:
             mock_session_class.return_value = mock_session

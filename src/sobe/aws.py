@@ -40,13 +40,17 @@ class AWS:
 
     def list(self, prefix: str) -> list[str]:
         """Return a list of object filenames in the given prefix."""
-        objects = self._bucket.objects.filter(Prefix=prefix)  # type: ignore[attr-defined]
-        results: list[str] = []
+        objects = self._bucket.objects.filter(Prefix=prefix)
+        pos1 = len(prefix)
+        results = set()
         for obj in objects:
-            pos = len(prefix)
-            if "/" in obj.key[pos:-1] or len(obj.key) == pos:
-                continue  # skip recursive entries
-            results.append(obj.key[pos:])
+            if len(obj.key) == pos1:
+                continue  # skip the prefix entry itself
+            pos2 = obj.key.find("/", pos1)
+            if pos2 == -1:
+                results.add(obj.key[pos1:])
+            else:
+                results.add(obj.key[pos1:pos2] + "/")
         return sorted(results)
 
     def invalidate_cache(self):
