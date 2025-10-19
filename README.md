@@ -48,7 +48,7 @@ https://example.com/2025/file1.jpg ...ok.
 https://example.com/2025/file2.pdf ...ok.
 ```
 
-You can call it with `--help` for all available options. You can delete files, clear the CloudFront cache (cached objects stay for 1 day by default), tweak the upload year. [The documentation contains better examples.](https://sobe.readthedocs.io/en/latest/usage.html#command-line-interface)
+You can call it with `--help` for all available options. You can list files, delete them, clear the CloudFront cache (cached objects stay for 1 day by default), tweak the upload year. [The documentation contains better examples.](https://sobe.readthedocs.io/en/latest/usage.html#command-line-interface)
 
 ## License
 

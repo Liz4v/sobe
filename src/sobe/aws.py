@@ -38,6 +38,17 @@ class AWS:
                 return False
             raise
 
+    def list(self, year: str) -> list[str]:
+        """Return a list of object filenames in the given year directory."""
+        prefix = f"{year}/"
+        objects = self._bucket.objects.filter(Prefix=prefix)  # type: ignore[attr-defined]
+        results: list[str] = []
+        for obj in objects:
+            if obj.key.endswith("/"):
+                continue  # skip directory placeholders
+            results.append(obj.key[len(prefix) :])
+        return sorted(results)
+
     def invalidate_cache(self):
         """Create and wait for a full-path CloudFront invalidation. Iterates until completion."""
         ref = datetime.datetime.now().astimezone().isoformat()

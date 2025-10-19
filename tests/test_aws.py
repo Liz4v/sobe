@@ -219,3 +219,24 @@ class TestAWS:
         # Should use placeholder account ID
         statement = policy["Statement"][0]
         assert "arn:aws:cloudfront::YOUR_ACCOUNT_ID:distribution/E1234567890123" in statement["Resource"]
+
+    def test_list_year_directory(self):
+        mock_session, mock_bucket, _ = mock_boto_session()
+
+        obj1 = Mock()
+        obj1.key = "2025/file1.txt"
+        obj2 = Mock()
+        obj2.key = "2025/file2.txt"
+        obj3 = Mock()
+        obj3.key = "2025/subdir/file3.txt"
+        obj4 = Mock()
+        obj4.key = "2025/"  # directory (should be ignored)
+        mock_bucket.objects.filter.return_value = [obj1, obj2, obj3, obj4]
+
+        with patch("sobe.aws.boto3.Session") as mock_session_class:
+            mock_session_class.return_value = mock_session
+            aws = AWS(self.config)
+            listing = aws.list("2025")
+
+        assert listing == ["file1.txt", "file2.txt", "subdir/file3.txt"]
+        mock_bucket.objects.filter.assert_called_once_with(Prefix="2025/")

@@ -55,6 +55,17 @@ You can invalidate after other operations::
   https://example.com/2025/file1.txt ...ok.
   Clearing cache......complete.
 
+List files for the current year::
+
+  $ sobe --list
+  https://example.com/2025/file1.txt
+  https://example.com/2025/image.png
+
+List files for a specific year::
+
+  $ sobe --list --year 2024
+  https://example.com/2024/old_upload.txt
+
 Generate the minimal IAM policy required for this tool::
 
   $ sobe --policy
@@ -79,6 +90,22 @@ Generate the minimal IAM policy required for this tool::
       }
     ]
   }
+
+List all files for the current year::
+
+  $ sobe --list
+  https://example.com/2025/file1.txt
+  https://example.com/2025/file2.png
+
+List files for a different year::
+
+  $ sobe --list --year 2024
+  https://example.com/2024/oldfile.txt
+
+If there are no files for the given year it prints a helpful message::
+
+  $ sobe --list --year 1999
+  No files.
 
 .. _uv: https://docs.astral.sh/uv/
 .. _Configuration: configuration.html

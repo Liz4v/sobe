@@ -1,7 +1,7 @@
 import tempfile
 from argparse import Namespace
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -83,6 +83,26 @@ class TestParseArgs:
         assert args.files == ["file1.txt", "file2.txt"]
         assert len(args.paths) == 2
 
+    def test_parse_args_list_only(self):
+        args = parse_args(["--list"])
+        # year should default, but we can't rely on actual year value, just that it's set
+        assert args.list is True
+        assert args.year is not None
+        assert args.files == []
+
+    def test_parse_args_list_with_year(self):
+        args = parse_args(["--list", "--year", "2024"])
+        assert args.list is True
+        assert args.year == "2024"
+
+    def test_parse_args_list_with_delete_error(self):
+        with pytest.raises(SystemExit):
+            parse_args(["--list", "--delete"])
+
+    def test_parse_args_list_with_files_error(self):
+        with pytest.raises(SystemExit):
+            parse_args(["--list", "file1.txt"])  # filtering not supported yet
+
     def test_parse_args_nonexistent_files_error(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
@@ -117,8 +137,23 @@ class TestMain:
     # I'm not sure whether we should be asserting over prints and writes.
     # This could easily become a maintenance nightmare. Keeping them in for now.
 
-    def _mock_args(self, *files: str, policy=False, year="2025", invalidate=False, delete=False):
-        return Namespace(policy=policy, year=year, invalidate=invalidate, delete=delete, paths=list(map(Path, files)))
+    def _mock_args(
+        self,
+        *files: str,
+        policy=False,
+        year="2025",
+        invalidate=False,
+        delete=False,
+        lst=False,
+    ) -> Namespace:
+        return Namespace(
+            policy=policy,
+            year=year,
+            invalidate=invalidate,
+            delete=delete,
+            list=lst,
+            paths=list(map(Path, files)),
+        )
 
     def test_bad_config(self, mock_parse_args, mock_load_config, mock_aws_class):
         mock_parse_args.return_value = self._mock_args()
@@ -199,3 +234,26 @@ class TestMain:
         assert mock_write.call_count == 2
         assert mock_print.call_count == 2
         assert mock_print.call_count == 2
+
+    def test_main_list_mode_with_files(self, mock_parse_args, mock_load_config, mock_aws_class):
+        mock_parse_args.return_value = self._mock_args(lst=True)
+        mock_load_config.return_value = Config.from_dict({})
+        mock_aws_class().list.return_value = ["a.txt", "b.png"]
+
+        with patch("sobe.main.print") as mock_print:
+            main()
+
+        mock_aws_class().list.assert_called_once_with("2025")
+        mock_print.assert_any_call("https://example.com/2025/a.txt")
+        mock_print.assert_any_call("https://example.com/2025/b.png")
+
+    def test_main_list_mode_empty(self, mock_parse_args, mock_load_config, mock_aws_class):
+        mock_parse_args.return_value = self._mock_args(lst=True)
+        mock_load_config.return_value = Config.from_dict({})
+        mock_aws_class().list.return_value = []
+
+        with patch("sobe.main.print") as mock_print:
+            main()
+
+        mock_aws_class().list.assert_called_once_with("2025")
+        mock_print.assert_called_once_with("No files for year 2025.")

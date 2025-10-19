@@ -31,6 +31,15 @@ def main() -> None:
         print(aws.generate_needed_permissions())
         return
 
+    if args.list:
+        files = aws.list(str(args.year))
+        if not files:
+            print(f"No files for year {args.year}.")
+            return
+        for name in files:
+            print(f"{config.url}{args.year}/{name}")
+        return
+
     for path in args.paths:
         write(f"{config.url}{args.year}/{path.name} ...")
         if args.delete:

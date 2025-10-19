@@ -11,7 +11,7 @@ These instructions help AI code assistants (like GitHub Copilot Chat) contribute
 - Test coverage gate: 95% (HTML report under `htmlcov/`).
 
 ## Commands
-- Always use `uv` to run any Python code.
+- Always use `uv` to run any Python code and python tools like `pytest`.
 
 ## Coding Conventions
 - Use Python 3.11+ features (e.g. `typing.Self`, dataclasses, structural pattern matching) when they simplify code.
