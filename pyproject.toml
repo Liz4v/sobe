@@ -25,6 +25,14 @@ dependencies = [
     "platformdirs>=4.5.0",
 ]
 
+[project.optional-dependencies]
+# Extras used for building documentation on Read the Docs.
+docs = [
+    "furo>=2024.8.6",
+    "sphinx>=7.0.0",
+    "sphinx-autodoc-typehints>=2.0.0",
+]
+
 [project.scripts]
 sobe = "sobe.main:main"
 
@@ -63,10 +71,7 @@ build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
-    "furo>=2024.8.6",
     "pytest>=8.4.2",
     "pytest-cov>=7.0.0",
     "ruff>=0.14.0",
-    "sphinx>=7.0.0",
-    "sphinx-autodoc-typehints>=2.0.0",
 ]
