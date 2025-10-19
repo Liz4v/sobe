@@ -34,6 +34,7 @@ class TestParseArgs:
             args = parse_args(["--year", "2023", str(file1), str(file2)])
 
         assert args.year == "2023"
+        assert args.prefix == "2023/"
         assert args.files == [str(file1), str(file2)]
         assert len(args.paths) == 2
         assert args.paths[0] == file1
@@ -49,7 +50,8 @@ class TestParseArgs:
                 mock_date.today.return_value.year = 2025
                 args = parse_args([str(file1)])
 
-        assert args.year == 2025
+        assert args.year == "2025"
+        assert args.prefix == "2025/"
         assert args.files == [str(file1)]
 
     def test_parse_args_year_without_files_error(self):
@@ -84,16 +86,20 @@ class TestParseArgs:
         assert len(args.paths) == 2
 
     def test_parse_args_list_only(self):
-        args = parse_args(["--list"])
-        # year should default, but we can't rely on actual year value, just that it's set
+        with patch("sobe.main.datetime.date") as mock_date:
+            mock_date.today.return_value.year = 2025
+            args = parse_args(["--list"])
+
         assert args.list is True
-        assert args.year is not None
+        assert args.year == "2025"
+        assert args.prefix == "2025/"
         assert args.files == []
 
     def test_parse_args_list_with_year(self):
         args = parse_args(["--list", "--year", "2024"])
         assert args.list is True
         assert args.year == "2024"
+        assert args.prefix == "2024/"
 
     def test_parse_args_list_with_delete_error(self):
         with pytest.raises(SystemExit):
@@ -129,6 +135,21 @@ class TestParseArgs:
         assert args.paths[0] == file1
         assert args.paths[1] == file2
 
+    def test_year_empty_string(self):
+        args = parse_args(["--list", "--year", ""])
+        assert args.year == ""
+        assert args.prefix == ""
+
+    def test_year_subfolder(self):
+        args = parse_args(["--list", "--year", "2024/subfolder"])
+        assert args.year == "2024/subfolder"
+        assert args.prefix == "2024/subfolder/"
+
+    def test_year_subfolder_trailing_slash(self):
+        args = parse_args(["--list", "--year", "2024/subfolder/"])
+        assert args.year == "2024/subfolder/"
+        assert args.prefix == "2024/subfolder/"
+
 
 @patch("sobe.main.AWS")
 @patch("sobe.main.load_config")
@@ -149,6 +170,7 @@ class TestMain:
         return Namespace(
             policy=policy,
             year=year,
+            prefix=f"{year}/" if year else "",
             invalidate=invalidate,
             delete=delete,
             list=lst,
@@ -182,7 +204,7 @@ class TestMain:
             main()
 
         mock_write.assert_called_once_with("https://example.com/2025/test.txt ...")
-        mock_aws_class().upload.assert_called_once_with("2025", Path("test.txt"))
+        mock_aws_class().upload.assert_called_once_with("2025/", Path("test.txt"))
         mock_print.assert_called_once_with("ok.")
 
     def test_main_delete_mode_existing_file(self, mock_parse_args, mock_load_config, mock_aws_class):
@@ -194,7 +216,7 @@ class TestMain:
             main()
 
         mock_write.assert_called_once_with("https://example.com/2025/test.txt ...")
-        mock_aws_class().delete.assert_called_once_with("2025", "test.txt")
+        mock_aws_class().delete.assert_called_once_with("2025/", "test.txt")
         mock_print.assert_called_once_with("deleted.")
 
     def test_main_delete_mode_nonexistent_file(self, mock_parse_args, mock_load_config, mock_aws_class):
@@ -206,7 +228,7 @@ class TestMain:
             main()
 
         mock_write.assert_called_once_with("https://example.com/2025/test.txt ...")
-        mock_aws_class().delete.assert_called_once_with("2025", "test.txt")
+        mock_aws_class().delete.assert_called_once_with("2025/", "test.txt")
         mock_print.assert_called_once_with("didn't exist.")
 
     def test_main_invalidate_mode(self, mock_parse_args, mock_load_config, mock_aws_class):
@@ -229,8 +251,8 @@ class TestMain:
             main()
 
         assert mock_aws_class().upload.call_count == 2
-        mock_aws_class().upload.assert_any_call("2025", Path("file1.txt"))
-        mock_aws_class().upload.assert_any_call("2025", Path("file2.txt"))
+        mock_aws_class().upload.assert_any_call("2025/", Path("file1.txt"))
+        mock_aws_class().upload.assert_any_call("2025/", Path("file2.txt"))
         assert mock_write.call_count == 2
         assert mock_print.call_count == 2
         assert mock_print.call_count == 2
@@ -243,7 +265,7 @@ class TestMain:
         with patch("sobe.main.print") as mock_print:
             main()
 
-        mock_aws_class().list.assert_called_once_with("2025")
+        mock_aws_class().list.assert_called_once_with("2025/")
         mock_print.assert_any_call("https://example.com/2025/a.txt")
         mock_print.assert_any_call("https://example.com/2025/b.png")
 
@@ -255,5 +277,5 @@ class TestMain:
         with patch("sobe.main.print") as mock_print:
             main()
 
-        mock_aws_class().list.assert_called_once_with("2025")
-        mock_print.assert_called_once_with("No files for year 2025.")
+        mock_aws_class().list.assert_called_once_with("2025/")
+        mock_print.assert_called_once_with("No files under https://example.com/2025/")

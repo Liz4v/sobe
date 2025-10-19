@@ -32,21 +32,21 @@ def main() -> None:
         return
 
     if args.list:
-        files = aws.list(str(args.year))
+        files = aws.list(args.prefix)
         if not files:
-            print(f"No files for year {args.year}.")
+            print(f"No files under {config.url}{args.prefix}")
             return
         for name in files:
-            print(f"{config.url}{args.year}/{name}")
+            print(f"{config.url}{args.prefix}{name}")
         return
 
     for path in args.paths:
-        write(f"{config.url}{args.year}/{path.name} ...")
+        write(f"{config.url}{args.prefix}{path.name} ...")
         if args.delete:
-            existed = aws.delete(args.year, path.name)
+            existed = aws.delete(args.prefix, path.name)
             print("deleted." if existed else "didn't exist.")
         else:
-            aws.upload(args.year, path)
+            aws.upload(args.prefix, path)
             print("ok.")
     if args.invalidate:
         write("Clearing cache...")
@@ -57,7 +57,7 @@ def main() -> None:
 
 def parse_args(argv=None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Upload files to your AWS drop box.")
-    parser.add_argument("-y", "--year", type=str, help="change year directory")
+    parser.add_argument("-y", "--year", type=str, help="set remote directory (usually a year)")
     parser.add_argument("-l", "--list", action="store_true", help="list all files in the year")
     parser.add_argument("-d", "--delete", action="store_true", help="delete instead of upload")
     parser.add_argument("-i", "--invalidate", action="store_true", help="invalidate CloudFront cache")
@@ -76,9 +76,11 @@ def parse_args(argv=None) -> argparse.Namespace:
         return args
 
     if args.year is None:
-        args.year = datetime.date.today().year
+        args.year = str(datetime.date.today().year)
     elif not (args.files or args.list):
         parser.error("--year requires files or --list to be specified")
+
+    args.prefix = args.year if args.year == "" or args.year.endswith("/") else f"{args.year}/"
 
     if args.list:
         if args.delete:

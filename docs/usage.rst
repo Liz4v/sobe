@@ -33,10 +33,25 @@ Basic upload of files for the current year::
   https://example.com/2025/file1.txt ...ok.
   https://example.com/2025/image.png ...ok.
 
-Specify a different year directory::
+Specify a different directory ("year") value. It can be:
+
+* A plain year like ``2024``
+* A nested path like ``a/b/c``
+* An empty string (``''``) to use root
+
+Some examples::
 
   $ sobe --year 2024 file1.txt
   https://example.com/2024/file1.txt ...ok.
+
+  $ sobe --year f/g/h i.jpg
+  https://example.com/f/g/h/i.jpg ...ok.
+
+  $ sobe --year 2020/05/15 we-hate-wordpress.html
+  https://example.com/2020/05/15/we-hate-wordpress.html ...ok.
+
+  $ sobe --year '' index.html
+  https://example.com/index.html ...ok.
 
 Delete files instead of uploading::
 
@@ -61,10 +76,19 @@ List files for the current year::
   https://example.com/2025/file1.txt
   https://example.com/2025/image.png
 
-List files for a specific year::
+List files for a specific directory (same rules as above)::
 
   $ sobe --list --year 2024
   https://example.com/2024/old_upload.txt
+  https://example.com/2024/q1/
+
+  $ sobe --list --year 2024/q1
+  https://example.com/2024/q1/report.pdf
+
+  $ sobe --list --year ''
+  https://example.com/2024/
+  https://example.com/2025/
+  https://example.com/index.html
 
 Generate the minimal IAM policy required for this tool::
 
@@ -90,22 +114,6 @@ Generate the minimal IAM policy required for this tool::
       }
     ]
   }
-
-List all files for the current year::
-
-  $ sobe --list
-  https://example.com/2025/file1.txt
-  https://example.com/2025/file2.png
-
-List files for a different year::
-
-  $ sobe --list --year 2024
-  https://example.com/2024/oldfile.txt
-
-If there are no files for the given year it prints a helpful message::
-
-  $ sobe --list --year 1999
-  No files.
 
 .. _uv: https://docs.astral.sh/uv/
 .. _Configuration: configuration.html

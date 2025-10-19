@@ -7,16 +7,19 @@ These instructions help AI code assistants (like GitHub Copilot Chat) contribute
 - Runtime: Python >=3.11.
 - Entrypoint: `sobe.main:main` (installed as `sobe` script).
 - Key deps: `boto3`, `platformdirs`.
-- Dev tooling: `pytest`, `pytest-cov`, `ruff`, `isort` (black profile).
+- Dev tooling: `pytest`, `pytest-cov`, `ruff`.
 - Test coverage gate: 95% (HTML report under `htmlcov/`).
 
 ## Commands
-- Always use `uv` to run any Python code and python tools like `pytest`.
+- Run pytest: `uv run pytest`
+- Run ruff: `uv run ruff`
+- Run individual python file: `uv run path/to/filename.py`
+- Build Sphinx docs: `uv run --extra docs -m sphinx -b html docs docs/_build/html`
+- Required parameters go at the end of the commands above.
 
 ## Coding Conventions
 - Use Python 3.11+ features (e.g. `typing.Self`, dataclasses, structural pattern matching) when they simplify code.
 - Line length: 120 (Ruff config).
-- Imports: follow `isort` + black profile grouping and ordering.
 - Prefer small pure functions; keep AWS SDK calls isolated for testability.
 - Raise precise exceptions; avoid catching broad `Exception` unless rethrowing with context.
 - Avoid premature abstraction; first duplication is OK, second deserves a helper.

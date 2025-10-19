@@ -6,7 +6,7 @@ A simple command-line tool to upload files to an AWS S3 bucket that is publicly 
 
 Full documentation: https://sobe.readthedocs.io/en/latest/
 
-It will upload any files you give it to your bucket, in a current year subdirectory, because that's the only easy way to organize chaos.
+It will upload any files you give it to your bucket, defaulting to a current year directory, because that's the only easy way to organize chaos.
 
 "Sobe" is Portuguese for "take it up" (in the imperative), as in "upload".
 
@@ -48,7 +48,7 @@ https://example.com/2025/file1.jpg ...ok.
 https://example.com/2025/file2.pdf ...ok.
 ```
 
-You can call it with `--help` for all available options. You can list files, delete them, clear the CloudFront cache (cached objects stay for 1 day by default), tweak the upload year. [The documentation contains better examples.](https://sobe.readthedocs.io/en/latest/usage.html#command-line-interface)
+You can call it with `--help` for all available options. You can list files, delete them, clear the CloudFront cache (cached objects stay for 1 day by default), select a different upload directory. [The documentation contains better examples.](https://sobe.readthedocs.io/en/latest/usage.html#command-line-interface)
 
 ## License
 

@@ -20,15 +20,15 @@ class AWS:
         self._bucket = self._s3_resource.Bucket(self.config.bucket)  # type: ignore[attr-defined]
         self._cloudfront = self._session.client("cloudfront", **self.config.service)
 
-    def upload(self, year: str, local_path: pathlib.Path) -> None:
+    def upload(self, prefix: str, local_path: pathlib.Path) -> None:
         """Uploads a file."""
         type_guess, _ = mimetypes.guess_type(local_path)
         extra_args = {"ContentType": type_guess or "application/octet-stream"}
-        self._bucket.upload_file(str(local_path), f"{year}/{local_path.name}", ExtraArgs=extra_args)
+        self._bucket.upload_file(str(local_path), f"{prefix}{local_path.name}", ExtraArgs=extra_args)
 
-    def delete(self, year: str, remote_filename: str) -> bool:
+    def delete(self, prefix: str, remote_filename: str) -> bool:
         """Delete a file, if it exists. Returns whether it did."""
-        obj = self._bucket.Object(f"{year}/{remote_filename}")
+        obj = self._bucket.Object(f"{prefix}{remote_filename}")
         try:
             obj.load()
             obj.delete()
@@ -38,15 +38,15 @@ class AWS:
                 return False
             raise
 
-    def list(self, year: str) -> list[str]:
-        """Return a list of object filenames in the given year directory."""
-        prefix = f"{year}/"
+    def list(self, prefix: str) -> list[str]:
+        """Return a list of object filenames in the given prefix."""
         objects = self._bucket.objects.filter(Prefix=prefix)  # type: ignore[attr-defined]
         results: list[str] = []
         for obj in objects:
-            if obj.key.endswith("/"):
-                continue  # skip directory placeholders
-            results.append(obj.key[len(prefix) :])
+            pos = len(prefix)
+            if "/" in obj.key[pos:-1] or len(obj.key) == pos:
+                continue  # skip recursive entries
+            results.append(obj.key[pos:])
         return sorted(results)
 
     def invalidate_cache(self):
