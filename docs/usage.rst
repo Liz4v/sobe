@@ -16,7 +16,7 @@ Run it once to create a default configuration file::
 
   $ sobe
   Created config file at the path below. You must edit it before use.
-  /home/username/.config/sobe/config.toml
+  /home/user/.config/sobe/config.toml
 
 Edit the configuration file as described in the Configuration_ section, then re-run the command.
 
@@ -33,10 +33,24 @@ Basic upload of files for the current year::
   https://example.com/2025/file1.txt ...ok.
   https://example.com/2025/image.png ...ok.
 
-Specify a different year directory::
+Specify a different directory ("year") value. It can be anything. Some examples::
 
   $ sobe --year 2024 file1.txt
   https://example.com/2024/file1.txt ...ok.
+
+  $ sobe --year f/g/h i.jpg
+  https://example.com/f/g/h/i.jpg ...ok.
+
+  $ sobe --year 2020/05/15 we-hate-wordpress.html
+  https://example.com/2020/05/15/we-hate-wordpress.html ...ok.
+
+  $ sobe --year '' index.html
+  https://example.com/index.html ...ok.
+
+Override the detected MIME type for a file (force a specific ``Content-Type`` header)::
+
+  $ sobe --content-type application/x-custom data.bin
+  https://example.com/2025/data.bin ...ok.
 
 Delete files instead of uploading::
 
@@ -55,7 +69,27 @@ You can invalidate after other operations::
   https://example.com/2025/file1.txt ...ok.
   Clearing cache......complete.
 
-Generate the minimal IAM policy required for this tool::
+List files for the current year::
+
+  $ sobe --list
+  https://example.com/2025/file1.txt
+  https://example.com/2025/image.png
+
+List files for a specific directory (same rules as above)::
+
+  $ sobe --list --year 2024
+  https://example.com/2024/old_upload.txt
+  https://example.com/2024/q1/
+
+  $ sobe --list --year 2024/q1
+  https://example.com/2024/q1/report.pdf
+
+  $ sobe --list --year ''
+  https://example.com/2024/
+  https://example.com/2025/
+  https://example.com/index.html
+
+Generate the minimal IAM policy required for this tool. This command is to help setting up AWS IAM permissions for a new user or role that will use ``sobe``. The output shows the minimum AWS permissions needed for all operations (upload, delete, list, and cache invalidation). Copy this JSON and use it when creating or modifying IAM policies in the AWS Console or via AWS CLI::
 
   $ sobe --policy
   {

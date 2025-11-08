@@ -46,7 +46,7 @@ class TestAWS:
         mock_session.resource.assert_called_once_with("s3", verify=True)
         mock_session.client.assert_called_once_with("cloudfront", verify=True)
 
-    @patch("sobe.aws.mimetypes.guess_type")
+    @patch("mimetypes.guess_type")
     def test_upload_with_known_mime_type(self, mock_guess_type):
         mock_guess_type.return_value = ("text/plain", None)
         mock_session, mock_bucket, _ = mock_boto_session()
@@ -58,18 +58,37 @@ class TestAWS:
             with patch("sobe.aws.boto3.Session") as mock_session_class:
                 mock_session_class.return_value = mock_session
                 aws = AWS(self.config)
-                aws.upload("2025", test_file)
+                aws.upload("2025/", test_file)
 
         mock_bucket.upload_file.assert_called_once_with(
             str(test_file), f"2025/{test_file.name}", ExtraArgs={"ContentType": "text/plain"}
         )
 
-    @patch("sobe.aws.mimetypes.guess_type")
-    def test_upload_with_unknown_mime_type(self, mock_guess_type):
-        mock_guess_type.return_value = (None, None)
+    def test_upload_with_forced_content_type(self):
         mock_session, mock_bucket, _ = mock_boto_session()
 
-        # Create a temporary file
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=True) as f:
+            f.write("test content")
+            test_file = pathlib.Path(f.name)
+
+            with patch("sobe.aws.boto3.Session") as mock_session_class:
+                mock_session_class.return_value = mock_session
+                aws = AWS(self.config)
+                aws.upload("2025/", test_file, content_type="application/x-custom")
+
+        mock_bucket.upload_file.assert_called_once_with(
+            str(test_file), f"2025/{test_file.name}", ExtraArgs={"ContentType": "application/x-custom"}
+        )
+
+    @patch("mimetypes.guess_type")
+    @patch("puremagic.magic_file")
+    def test_upload_with_unknown_mime_type_default_octet_stream(self, mock_magic_file, mock_guess_type):
+        """If both mimetypes and puremagic fail to identify, default to application/octet-stream."""
+        mock_guess_type.return_value = (None, None)
+        # puremagic returns objects but none have a mime_type
+        mock_magic_file.return_value = [Mock(mime_type=None)]
+        mock_session, mock_bucket, _ = mock_boto_session()
+
         with tempfile.NamedTemporaryFile(mode="w", suffix=".unknown", delete=True) as f:
             f.write("test content")
             test_file = pathlib.Path(f.name)
@@ -77,10 +96,31 @@ class TestAWS:
             with patch("sobe.aws.boto3.Session") as mock_session_class:
                 mock_session_class.return_value = mock_session
                 aws = AWS(self.config)
-                aws.upload("2025", test_file)
+                aws.upload("2025/", test_file)
 
         mock_bucket.upload_file.assert_called_once_with(
             str(test_file), f"2025/{test_file.name}", ExtraArgs={"ContentType": "application/octet-stream"}
+        )
+
+    @patch("mimetypes.guess_type")
+    @patch("puremagic.magic_file")
+    def test_upload_with_unknown_mime_type_puremagic_fallback(self, mock_magic_file, mock_guess_type):
+        """Fallback to puremagic when mimetypes fails and puremagic provides a mime_type."""
+        mock_guess_type.return_value = (None, None)
+        mock_magic_file.return_value = [Mock(mime_type="image/png")]
+        mock_session, mock_bucket, _ = mock_boto_session()
+
+        with tempfile.NamedTemporaryFile(mode="wb", suffix=".bin", delete=True) as f:
+            f.write(b"\x89PNG\r\n\x1a\n")  # minimal PNG header to be realistic (though we mock puremagic)
+            test_file = pathlib.Path(f.name)
+
+            with patch("sobe.aws.boto3.Session") as mock_session_class:
+                mock_session_class.return_value = mock_session
+                aws = AWS(self.config)
+                aws.upload("2025/", test_file)
+
+        mock_bucket.upload_file.assert_called_once_with(
+            str(test_file), f"2025/{test_file.name}", ExtraArgs={"ContentType": "image/png"}
         )
 
     def test_delete_existing_file(self):
@@ -91,7 +131,7 @@ class TestAWS:
         with patch("sobe.aws.boto3.Session") as mock_session_class:
             mock_session_class.return_value = mock_session
             aws = AWS(self.config)
-            result = aws.delete("2025", "test.txt")
+            result = aws.delete("2025/", "test.txt")
 
         assert result is True
         mock_bucket.Object.assert_called_once_with("2025/test.txt")
@@ -111,7 +151,7 @@ class TestAWS:
         with patch("sobe.aws.boto3.Session") as mock_session_class:
             mock_session_class.return_value = mock_session
             aws = AWS(self.config)
-            result = aws.delete("2025", "nonexistent.txt")
+            result = aws.delete("2025/", "nonexistent.txt")
 
         assert result is False
         mock_bucket.Object.assert_called_once_with("2025/nonexistent.txt")
@@ -219,3 +259,24 @@ class TestAWS:
         # Should use placeholder account ID
         statement = policy["Statement"][0]
         assert "arn:aws:cloudfront::YOUR_ACCOUNT_ID:distribution/E1234567890123" in statement["Resource"]
+
+    def test_list_year_directory(self):
+        mock_session, mock_bucket, _ = mock_boto_session()
+
+        obj1 = Mock()
+        obj1.key = "2025/"  # no (base directory placeholder)
+        obj2 = Mock()
+        obj2.key = "2025/file1.txt"  # yes
+        obj3 = Mock()
+        obj3.key = "2025/file2.txt"  # yes
+        obj4 = Mock()
+        obj4.key = "2025/subdir/file3.txt"  # yes, but as subdir/
+        mock_bucket.objects.filter.return_value = [obj1, obj2, obj3, obj4]
+
+        with patch("sobe.aws.boto3.Session") as mock_session_class:
+            mock_session_class.return_value = mock_session
+            aws = AWS(self.config)
+            listing = aws.list("2025/")
+
+        assert listing == ["file1.txt", "file2.txt", "subdir/"]
+        mock_bucket.objects.filter.assert_called_once_with(Prefix="2025/")

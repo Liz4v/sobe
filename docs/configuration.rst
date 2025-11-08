@@ -28,6 +28,7 @@ Here's a minimal configuration template:
    cloudfront = "E1111111111111"
 
    [aws.session]
+   # If you already have AWS CLI set up, don't fill keys here.
    # region_name = "..."
    # profile_name = "..."
    # aws_access_key_id = "..."
@@ -48,6 +49,8 @@ Editing Guidance
   * If you already have AWS CLI config set up with these settings, you can leave this empty.
   * Here's the documentation of all possible parameters: :class:`boto3.session.Session`
 
-* ``aws.service``: Dictionary of extra options passed to each client/resource creation. Useful to manage TLS certificate settings.
+* ``aws.service``: Dictionary of extra options passed to each client/resource creation.
+
+  * ``verify``: Controls SSL/TLS certificate verification. Set to ``false`` to disable certificate validation (useful for corporate MITM proxies or self-signed certificates, but not recommended for general use). Defaults to ``true`` (secure).
 
 Once edited, re-run the command. If the bucket still matches the placeholder name the tool will recreate/overwrite the template and exit again.
