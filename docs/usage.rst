@@ -16,7 +16,7 @@ Run it once to create a default configuration file::
 
   $ sobe
   Created config file at the path below. You must edit it before use.
-  /home/username/.config/sobe/config.toml
+  /home/user/.config/sobe/config.toml
 
 Edit the configuration file as described in the Configuration_ section, then re-run the command.
 
@@ -89,7 +89,7 @@ List files for a specific directory (same rules as above)::
   https://example.com/2025/
   https://example.com/index.html
 
-Generate the minimal IAM policy required for this tool::
+Generate the minimal IAM policy required for this tool. This command is to help setting up AWS IAM permissions for a new user or role that will use ``sobe``. The output shows the minimum AWS permissions needed for all operations (upload, delete, list, and cache invalidation). Copy this JSON and use it when creating or modifying IAM policies in the AWS Console or via AWS CLI::
 
   $ sobe --policy
   {
