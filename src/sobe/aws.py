@@ -19,10 +19,12 @@ class AWS:
         self._bucket = self._s3_resource.Bucket(self.config.bucket)  # type: ignore[attr-defined]
         self._cloudfront = self._session.client("cloudfront", **self.config.service)
 
-    def upload(self, prefix: str, local_path: pathlib.Path, *, content_type: str | None = None) -> None:
+    def upload(self, prefix: str, local_path: pathlib.Path, remote_name: str = "", *, content_type: str = "") -> None:
         """Upload a file."""
         extra_args = {"ContentType": content_type or guess_content_type(local_path)}
-        self._bucket.upload_file(str(local_path), f"{prefix}{local_path.name}", ExtraArgs=extra_args)
+        if not remote_name:
+            remote_name = local_path.name
+        self._bucket.upload_file(str(local_path), f"{prefix}{remote_name}", ExtraArgs=extra_args)
 
     def delete(self, prefix: str, remote_filename: str) -> bool:
         """Delete a file, if it exists. Returns whether it did."""

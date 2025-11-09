@@ -52,6 +52,16 @@ Override the detected MIME type for a file (force a specific ``Content-Type`` he
   $ sobe --content-type application/x-custom data.bin
   https://example.com/2025/data.bin ...ok.
 
+Upload a file using a different remote object name (rename on upload). This only works when uploading exactly one file::
+
+  $ sobe --remote-name index.html local-dev-index.tmp
+  https://example.com/2025/index.html ...ok.
+
+Example with ``--year`` for placement under another prefix::
+
+  $ sobe --year 2024 --remote-name avatar.png profile-picture-latest.png
+  https://example.com/2024/avatar.png ...ok.
+
 Delete files instead of uploading::
 
   $ sobe --delete file1.txt
