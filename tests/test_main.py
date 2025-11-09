@@ -211,6 +211,12 @@ class TestParseArgs:
         with pytest.raises(SystemExit):
             parse_args(["--remote-name", "remote.txt", "--list"])  # list mode not compatible
 
+    def test_parse_args_version_flag(self):
+        # Argparse's --version action should exit cleanly with code 0
+        with pytest.raises(SystemExit) as risen:
+            parse_args(["--version"])
+        assert risen.value.code == 0
+
 
 @patch("sobe.main.AWS")
 @patch("sobe.main.load_config")

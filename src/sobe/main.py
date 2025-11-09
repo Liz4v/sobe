@@ -3,6 +3,7 @@
 import argparse
 import datetime
 import functools
+import importlib.metadata
 import pathlib
 import warnings
 
@@ -57,6 +58,7 @@ def main() -> None:
 
 def parse_args(argv=None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Upload files to your AWS drop box.")
+    parser.add_argument("--version", action="version", version=f"sobe {get_version()}")
     parser.add_argument("-y", "--year", type=str, help="set remote directory (usually a year)")
     parser.add_argument("-t", "--content-type", type=str, help="override detected MIME type for uploaded files")
     parser.add_argument("-l", "--list", action="store_true", help="list all files in the year")
@@ -109,3 +111,11 @@ def parse_args(argv=None) -> argparse.Namespace:
             raise SystemExit(1)
 
     return args
+
+
+def get_version() -> str:
+    """Get the current version of the sobe package."""
+    try:
+        return importlib.metadata.version("sobe")
+    except importlib.metadata.PackageNotFoundError:  # pragma: no cover
+        return "unknown"
