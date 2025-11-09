@@ -46,7 +46,7 @@ def main() -> None:
             existed = aws.delete(args.prefix, path.name)
             print("deleted." if existed else "didn't exist.")
         else:
-            aws.upload(args.prefix, path, content_type=args.content_type )
+            aws.upload(args.prefix, path, args.remote_name, content_type=args.content_type)
             print("ok.")
     if args.invalidate:
         write("Clearing cache...")
@@ -63,6 +63,7 @@ def parse_args(argv=None) -> argparse.Namespace:
     parser.add_argument("-d", "--delete", action="store_true", help="delete instead of upload")
     parser.add_argument("-i", "--invalidate", action="store_true", help="invalidate CloudFront cache")
     parser.add_argument("-p", "--policy", action="store_true", help="generate IAM policy requirements and exit")
+    parser.add_argument("-r", "--remote-name", type=str, help="upload a single file with a different remote name")
     parser.add_argument("files", nargs="*", help="Source files.")
     args = parser.parse_args(argv)
     num_arg_types = sum(map(bool, args.__dict__.values()))
@@ -82,11 +83,13 @@ def parse_args(argv=None) -> argparse.Namespace:
         parser.error("--year requires files or --list to be specified")
     args.prefix = args.year if args.year == "" or args.year.endswith("/") else f"{args.year}/"
 
-    if args.content_type:
+    if args.content_type or args.remote_name:
         if args.delete or args.list:
-            parser.error("--content-type cannot be used with --delete or --list")
+            parser.error("Arguments like --content-type and --remote-name are only valid for uploads")
         if not args.files:
-            parser.error("--content-type requires files to be specified")
+            parser.error("You must specify files to be uploaded")
+        elif args.remote_name and len(args.files) > 1:
+            parser.error("--remote-name can only be used when uploading a single file")
     elif args.list:
         if args.delete:
             parser.error("--list and --delete cannot be used at the same time")

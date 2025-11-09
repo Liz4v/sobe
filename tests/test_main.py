@@ -173,6 +173,44 @@ class TestParseArgs:
         assert args.year == "2024/subfolder/"
         assert args.prefix == "2024/subfolder/"
 
+    # --remote-name tests
+    def test_parse_args_remote_name_with_single_file(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            file1 = temp_path / "local.txt"
+            file1.write_text("x")
+            args = parse_args(["--remote-name", "remote.txt", str(file1)])
+
+        assert args.remote_name == "remote.txt"
+        assert args.files == [str(file1)]
+        assert args.paths[0] == file1
+
+    def test_parse_args_remote_name_with_multiple_files_error(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            file1 = temp_path / "a.txt"
+            file2 = temp_path / "b.txt"
+            file1.write_text("a")
+            file2.write_text("b")
+            with pytest.raises(SystemExit):
+                parse_args(["--remote-name", "remote.txt", str(file1), str(file2)])
+
+    def test_parse_args_remote_name_without_files_error(self):
+        with pytest.raises(SystemExit):
+            parse_args(["--remote-name", "remote.txt"])
+
+    def test_parse_args_remote_name_with_delete_error(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            file1 = temp_path / "a.txt"
+            file1.write_text("a")
+            with pytest.raises(SystemExit):
+                parse_args(["--remote-name", "remote.txt", "--delete", str(file1)])
+
+    def test_parse_args_remote_name_with_list_error(self):
+        with pytest.raises(SystemExit):
+            parse_args(["--remote-name", "remote.txt", "--list"])  # list mode not compatible
+
 
 @patch("sobe.main.AWS")
 @patch("sobe.main.load_config")
@@ -190,6 +228,7 @@ class TestMain:
         delete=False,
         lst=False,
         content_type=None,
+        remote_name=None,
     ) -> Namespace:
         return Namespace(
             policy=policy,
@@ -199,6 +238,7 @@ class TestMain:
             delete=delete,
             list=lst,
             content_type=content_type,
+            remote_name=remote_name,
             paths=list(map(Path, files)),
         )
 
@@ -227,7 +267,7 @@ class TestMain:
         with patch("sobe.main.write") as mock_write, patch("sobe.main.print") as mock_print:
             main()
         mock_write.assert_called_once_with("https://example.com/2025/test.txt ...")
-        mock_aws_class().upload.assert_called_once_with("2025/", Path("test.txt"), content_type=None)
+        mock_aws_class().upload.assert_called_once_with("2025/", Path("test.txt"), None, content_type=None)
         mock_print.assert_called_once_with("ok.")
 
     def test_main_delete_mode_existing_file(self, mock_parse_args, mock_load_config, mock_aws_class):
@@ -269,8 +309,8 @@ class TestMain:
         with patch("sobe.main.write") as _mock_write, patch("sobe.main.print") as _mock_print:
             main()
         assert mock_aws_class().upload.call_count == 2
-        mock_aws_class().upload.assert_any_call("2025/", Path("file1.txt"), content_type=None)
-        mock_aws_class().upload.assert_any_call("2025/", Path("file2.txt"), content_type=None)
+        mock_aws_class().upload.assert_any_call("2025/", Path("file1.txt"), None, content_type=None)
+        mock_aws_class().upload.assert_any_call("2025/", Path("file2.txt"), None, content_type=None)
 
     def test_main_upload_with_content_type(self, mock_parse_args, mock_load_config, mock_aws_class):
         mock_parse_args.return_value = self._mock_args("custom.bin", content_type="application/x-bin")
@@ -279,7 +319,9 @@ class TestMain:
         with patch("sobe.main.write") as _mock_write, patch("sobe.main.print") as _mock_print:
             main()
         _mock_write.assert_called_once_with("https://example.com/2025/custom.bin ...")
-        mock_aws_class().upload.assert_called_once_with("2025/", Path("custom.bin"), content_type="application/x-bin")
+        mock_aws_class().upload.assert_called_once_with(
+            "2025/", Path("custom.bin"), None, content_type="application/x-bin"
+        )
         _mock_print.assert_called_once_with("ok.")
 
     def test_main_list_mode_with_files(self, mock_parse_args, mock_load_config, mock_aws_class):
@@ -304,3 +346,12 @@ class TestMain:
 
         mock_aws_class().list.assert_called_once_with("2025/")
         mock_print.assert_called_once_with("No files under https://example.com/2025/")
+
+    def test_main_upload_with_remote_name(self, mock_parse_args, mock_load_config, mock_aws_class):
+        mock_parse_args.return_value = self._mock_args("local.txt", remote_name="remote.txt")
+        mock_load_config.return_value = Config.from_dict({})
+        with patch("sobe.main.write") as _mock_write, patch("sobe.main.print") as _mock_print:
+            main()
+        _mock_write.assert_called_once_with("https://example.com/2025/local.txt ...")
+        mock_aws_class().upload.assert_called_once_with("2025/", Path("local.txt"), "remote.txt", content_type=None)
+        _mock_print.assert_called_once_with("ok.")
