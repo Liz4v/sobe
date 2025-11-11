@@ -42,7 +42,7 @@ def main() -> None:
         return
 
     for path in args.paths:
-        write(f"{config.url}{args.prefix}{path.name} ...")
+        write(f"{config.url}{args.prefix}{args.remote_name or path.name} ...")
         if args.delete:
             existed = aws.delete(args.prefix, path.name)
             print("deleted." if existed else "didn't exist.")

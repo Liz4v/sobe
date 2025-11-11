@@ -358,6 +358,6 @@ class TestMain:
         mock_load_config.return_value = Config.from_dict({})
         with patch("sobe.main.write") as _mock_write, patch("sobe.main.print") as _mock_print:
             main()
-        _mock_write.assert_called_once_with("https://example.com/2025/local.txt ...")
+        _mock_write.assert_called_once_with("https://example.com/2025/remote.txt ...")
         mock_aws_class().upload.assert_called_once_with("2025/", Path("local.txt"), "remote.txt", content_type=None)
         _mock_print.assert_called_once_with("ok.")
