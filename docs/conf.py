@@ -19,6 +19,7 @@ release = version
 
 # -- General configuration ---------------------------------------------------
 extensions = [
+    "myst_parser",
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
@@ -42,7 +43,7 @@ exclude_patterns: list[str] = []
 
 # -- Options for HTML output -------------------------------------------------
 html_theme = "furo"
-html_static_path = ["_static"]
+html_static_path = []
 html_title = f"{project} {release}"
 html_logo = None
 html_theme_options = {

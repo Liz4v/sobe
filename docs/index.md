@@ -1,7 +1,6 @@
-.. sobe documentation master file
+% sobe documentation master file
 
-Welcome to sobe's documentation!
-================================
+# Welcome to sobe's documentation!
 
 A simple command-line tool to upload files to an AWS S3 bucket that is publicly available through a CloudFront distribution. This is the traditional "drop box" use case that existed long before the advent of modern file sharing services.
 
@@ -11,23 +10,24 @@ It will upload any files you give it to your bucket, defaulting to a current yea
 
 Contents:
 
-.. toctree::
-   :maxdepth: 2
-   :caption: User Guide
+```{toctree}
+:maxdepth: 2
+:caption: User Guide
 
-   usage
-   configuration
+usage
+configuration
+```
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Reference
+```{toctree}
+:maxdepth: 2
+:caption: Reference
 
-   api/cli
-   api/config
-   api/aws
+api/cli
+api/config
+api/aws
+```
 
-Indices and tables
-==================
+# Indices and tables
 
-* :ref:`modindex`
-* :ref:`search`
+* {ref}`modindex`
+* {ref}`search`
