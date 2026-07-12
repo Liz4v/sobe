@@ -10,7 +10,7 @@ import warnings
 import urllib3.exceptions
 
 from sobe.aws import AWS
-from sobe.config import MustEditConfig, load_config
+from sobe.config import ConfigError, MustEditConfig, load_config
 
 write = functools.partial(print, flush=True, end="")
 print = functools.partial(print, flush=True)  # type: ignore
@@ -19,30 +19,49 @@ warnings.filterwarnings("ignore", category=urllib3.exceptions.InsecureRequestWar
 
 def main() -> None:
     try:
-        config = load_config()
+        config, migration = load_config()
     except MustEditConfig as err:
-        print("Created config file at the path below. You must edit it before use.")
+        if err.created:
+            print("Created config file at the path below. You must edit it before use.")
+        else:
+            print("The config file at the path below is not configured yet. You must edit it before use.")
         print(err.path)
         raise SystemExit(1) from err
+    except ConfigError as err:
+        print(err)
+        raise SystemExit(1) from err
+
+    if migration is not None:
+        print(f"Migrated config file {migration.path} to the new multi-target format.")
+        print(f"The original file was saved to {migration.backup}")
 
     args = parse_args()
-    aws = AWS(config.aws)
+
+    try:
+        target = config.select(args.target)
+    except ConfigError as err:
+        print(err)
+        raise SystemExit(1) from err
+
+    aws = AWS(target)
 
     if args.policy:
         print(aws.generate_needed_permissions())
         return
 
+    base = target.url or f"{target.storage.bucket}/"
+
     if args.list:
         files = aws.list(args.prefix)
         if not files:
-            print(f"No files under {config.url}{args.prefix}")
+            print(f"No files under {base}{args.prefix}")
             return
         for name in files:
-            print(f"{config.url}{args.prefix}{name}")
+            print(f"{base}{args.prefix}{name}")
         return
 
     for path in args.paths:
-        write(f"{config.url}{args.prefix}{args.remote_name or path.name} ...")
+        write(f"{base}{args.prefix}{args.remote_name or path.name} ...")
         if args.delete:
             existed = aws.delete(args.prefix, path.name)
             print("deleted." if existed else "didn't exist.")
@@ -50,17 +69,21 @@ def main() -> None:
             aws.upload(args.prefix, path, args.remote_name, content_type=args.content_type)
             print("ok.")
     if args.invalidate:
-        write("Clearing cache...")
-        for _ in aws.invalidate_cache():
-            write(".")
-        print("complete.")
+        if target.cache is None:
+            print(f'Target "{target.name}" has no cache configured; skipping invalidation.')
+        else:
+            write("Clearing cache...")
+            for _ in aws.invalidate_cache():
+                write(".")
+            print("complete.")
 
 
 def parse_args(argv=None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Upload files to your AWS drop box.")
     parser.add_argument("--version", action="version", version=f"sobe {get_version()}")
+    parser.add_argument("-t", "--target", type=str, help="select the configured target to operate on")
     parser.add_argument("-y", "--year", type=str, help="set remote directory (usually a year)")
-    parser.add_argument("-t", "--content-type", type=str, help="override detected MIME type for uploaded files")
+    parser.add_argument("--content-type", type=str, help="override detected MIME type for uploaded files")
     parser.add_argument("-l", "--list", action="store_true", help="list all files in the year")
     parser.add_argument("-d", "--delete", action="store_true", help="delete instead of upload")
     parser.add_argument("-i", "--invalidate", action="store_true", help="invalidate CloudFront cache")
@@ -75,9 +98,12 @@ def parse_args(argv=None) -> argparse.Namespace:
         raise SystemExit(0)
 
     if args.policy:
-        if num_arg_types != 1:
-            parser.error("--policy cannot be used with other arguments")
+        if num_arg_types != 1 + bool(args.target):
+            parser.error("--policy cannot be used with other arguments (except --target)")
         return args
+
+    if args.target and not (args.files or args.list or args.invalidate):
+        parser.error("--target requires an operation: files to upload or delete, --list, --invalidate, or --policy")
 
     if args.year is None:
         args.year = str(datetime.date.today().year)

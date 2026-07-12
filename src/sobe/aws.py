@@ -8,16 +8,18 @@ import time
 import boto3
 import botocore.exceptions
 
-from sobe.config import AWSConfig
+from sobe.config import Target
 
 
 class AWS:
-    def __init__(self, config: AWSConfig) -> None:
-        self.config = config
-        self._session = boto3.Session(**self.config.session)
-        self._s3_resource = self._session.resource("s3", **self.config.service)
-        self._bucket = self._s3_resource.Bucket(self.config.bucket)  # type: ignore[attr-defined]
-        self._cloudfront = self._session.client("cloudfront", **self.config.service)
+    def __init__(self, target: Target) -> None:
+        self.target = target
+        self._session = boto3.Session(**self.target.aws_session)
+        self._s3_resource = self._session.resource("s3", **self.target.aws_service)
+        self._bucket = self._s3_resource.Bucket(self.target.storage.bucket)  # type: ignore[attr-defined]
+        self._cloudfront = None
+        if self.target.cache is not None:
+            self._cloudfront = self._session.client("cloudfront", **self.target.aws_service)
 
     def upload(self, prefix: str, local_path: pathlib.Path, remote_name: str = "", *, content_type: str = "") -> None:
         """Upload a file."""
@@ -54,10 +56,13 @@ class AWS:
         return sorted(results)
 
     def invalidate_cache(self):
-        """Create and wait for a full-path CloudFront invalidation. Iterates until completion."""
+        """Create and wait for a full-path CloudFront invalidation. Iterates until completion.
+
+        Only valid on a target with a cache; the caller checks before dispatching here.
+        """
         ref = datetime.datetime.now().astimezone().isoformat()
         batch = {"Paths": {"Quantity": 1, "Items": ["/*"]}, "CallerReference": ref}
-        distribution = self.config.cloudfront
+        distribution = self.target.cache.distribution
         response = self._cloudfront.create_invalidation(DistributionId=distribution, InvalidationBatch=batch)
         invalidation = response["Invalidation"]["Id"]
         status = "Created"
@@ -68,24 +73,29 @@ class AWS:
             status = response["Invalidation"]["Status"]
 
     def generate_needed_permissions(self) -> str:
-        """Return the minimal IAM policy statement required by the tool."""
-        try:
-            sts = self._session.client("sts", **self.config.service)
-            account_id = sts.get_caller_identity()["Account"]
-        except botocore.exceptions.ClientError:
-            account_id = "YOUR_ACCOUNT_ID"
-
-        actions = """
-            s3:PutObject s3:GetObject s3:ListBucket s3:DeleteObject
-            cloudfront:CreateInvalidation cloudfront:GetInvalidation
-        """.split()
-        resources = [
-            f"arn:aws:s3:::{self.config.bucket}",
-            f"arn:aws:s3:::{self.config.bucket}/*",
-            f"arn:aws:cloudfront::{account_id}:distribution/{self.config.cloudfront}",
+        """Return the minimal IAM policy required by the tool for this target."""
+        bucket = self.target.storage.bucket
+        statements = [
+            {
+                "Effect": "Allow",
+                "Action": ["s3:PutObject", "s3:GetObject", "s3:ListBucket", "s3:DeleteObject"],
+                "Resource": [f"arn:aws:s3:::{bucket}", f"arn:aws:s3:::{bucket}/*"],
+            }
         ]
-        statement = {"Effect": "Allow", "Action": actions, "Resource": resources}
-        policy = {"Version": "2012-10-17", "Statement": [statement]}
+        if self.target.cache is not None:
+            try:
+                sts = self._session.client("sts", **self.target.aws_service)
+                account_id = sts.get_caller_identity()["Account"]
+            except botocore.exceptions.ClientError:
+                account_id = "YOUR_ACCOUNT_ID"
+            statements.append(
+                {
+                    "Effect": "Allow",
+                    "Action": ["cloudfront:CreateInvalidation", "cloudfront:GetInvalidation"],
+                    "Resource": f"arn:aws:cloudfront::{account_id}:distribution/{self.target.cache.distribution}",
+                }
+            )
+        policy = {"Version": "2012-10-17", "Statement": statements}
         return json.dumps(policy, indent=2)
 
 

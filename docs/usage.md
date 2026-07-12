@@ -22,7 +22,7 @@ Created config file at the path below. You must edit it before use.
 /home/user/.config/sobe/config.toml
 ```
 
-Edit the configuration file as described in the [Configuration](configuration.md) section, then re-run the command.
+Edit the configuration file as described in the [Configuration](configuration.md) section, then re-run the command. (If the file already exists but is still unconfigured, the message says so instead of claiming it was created.)
 
 ## Command-line Interface
 
@@ -56,7 +56,24 @@ $ sobe --year '' index.html
 https://example.com/index.html ...ok.
 ```
 
-Override the detected MIME type for a file (force a specific `Content-Type` header):
+Upload to a specific target when the config defines more than one (see [Configuration](configuration.md) for defining targets). Without `-t`/`--target`, the config's `default` target is used:
+
+```console
+$ sobe --target scratch file1.txt
+https://scratch.example.com/2025/file1.txt ...ok.
+
+$ sobe -t scratch --list
+https://scratch.example.com/2025/file1.txt
+```
+
+When the selected target defines no public URL, output shows the bucket name in its place:
+
+```console
+$ sobe -t backups file1.txt
+my-backup-bucket/2025/file1.txt ...ok.
+```
+
+Override the detected MIME type for a file (force a specific `Content-Type` header). Note that `--content-type` is long-only: `-t` selects a target. A leftover `sobe -t image/png ...` habit fails loudly, because `/` is not valid in a target name:
 
 ```console
 $ sobe --content-type application/x-custom data.bin
@@ -85,11 +102,19 @@ https://example.com/2025/file1.txt ...deleted.
 https://example.com/2025/does_not_exist.txt ...didn't exist.
 ```
 
-Invalidate CloudFront cache:
+Invalidate the target's CloudFront cache:
 
 ```console
 $ sobe --invalidate
 Clearing cache......complete.
+```
+
+If the selected target has no cache configured, the rest of the command still runs; the invalidation is skipped with a notice and the exit code stays 0:
+
+```console
+$ sobe --invalidate file1.txt
+my-backup-bucket/2025/file1.txt ...ok.
+Target "backups" has no cache configured; skipping invalidation.
 ```
 
 You can invalidate after other operations:
@@ -124,7 +149,7 @@ https://example.com/2025/
 https://example.com/index.html
 ```
 
-Generate the minimal IAM policy required for this tool. This command is to help setting up AWS IAM permissions for a new user or role that will use `sobe`. The output shows the minimum AWS permissions needed for all operations (upload, delete, list, and cache invalidation). Copy this JSON and use it when creating or modifying IAM policies in the AWS Console or via AWS CLI:
+Generate the minimal IAM policy required for this tool. This command is to help setting up AWS IAM permissions for a new user or role that will use `sobe`. The output shows the minimum AWS permissions needed for all operations (upload, delete, list, and cache invalidation) on one target -- the selected (or default) one; `--policy` combines with `--target` but with no other flag. The CloudFront statement is omitted for a target without a cache. Copy this JSON and use it when creating or modifying IAM policies in the AWS Console or via AWS CLI:
 
 ```console
 $ sobe --policy
@@ -137,13 +162,20 @@ $ sobe --policy
         "s3:PutObject",
         "s3:GetObject",
         "s3:ListBucket",
-        "s3:DeleteObject",
+        "s3:DeleteObject"
+      ],
+      "Resource": [
+        "arn:aws:s3:::example-bucket",
+        "arn:aws:s3:::example-bucket/*"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
         "cloudfront:CreateInvalidation",
         "cloudfront:GetInvalidation"
       ],
       "Resource": [
-        "arn:aws:s3:::example-bucket",
-        "arn:aws:s3:::example-bucket/*",
         "arn:aws:cloudfront::YOUR_ACCOUNT_ID:distribution/E1111111111111"
       ]
     }

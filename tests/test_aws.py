@@ -7,7 +7,7 @@ import botocore.exceptions
 import pytest
 
 from sobe.aws import AWS
-from sobe.config import AWSConfig
+from sobe.config import CacheConfig, StorageConfig, Target
 
 
 def mock_boto_session():
@@ -25,14 +25,20 @@ def mock_boto_session():
     return mock_session, mock_bucket, mock_cloudfront_client
 
 
+def make_target(*, cache: CacheConfig | None = CacheConfig(type="aws_cloudfront", distribution="E1234567890123")):
+    return Target(
+        name="main",
+        storage=StorageConfig(type="aws_s3", bucket="test-bucket"),
+        url="https://test.example.com/",
+        cache=cache,
+        aws_session={"region_name": "ca-west-1"},
+        aws_service={"verify": True},
+    )
+
+
 class TestAWS:
     def setup_method(self):
-        self.config = AWSConfig(
-            bucket="test-bucket",
-            cloudfront="E1234567890123",
-            session={"region_name": "ca-west-1"},
-            service={"verify": True},
-        )
+        self.config = make_target()
 
     def test_init(self):
         mock_session, _, _ = mock_boto_session()
@@ -41,10 +47,20 @@ class TestAWS:
             mock_session_class.return_value = mock_session
             aws = AWS(self.config)
 
-        assert aws.config == self.config
+        assert aws.target == self.config
         mock_session_class.assert_called_once_with(region_name="ca-west-1")
         mock_session.resource.assert_called_once_with("s3", verify=True)
         mock_session.client.assert_called_once_with("cloudfront", verify=True)
+
+    def test_init_without_cache(self):
+        mock_session, _, _ = mock_boto_session()
+
+        with patch("sobe.aws.boto3.Session") as mock_session_class:
+            mock_session_class.return_value = mock_session
+            aws = AWS(make_target(cache=None))
+
+        assert aws._cloudfront is None
+        mock_session.client.assert_not_called()
 
     @patch("mimetypes.guess_type")
     def test_upload_with_known_mime_type(self, mock_guess_type):
@@ -227,20 +243,22 @@ class TestAWS:
             policy = json.loads(policy_json)
 
         assert policy["Version"] == "2012-10-17"
-        assert len(policy["Statement"]) == 1
+        assert len(policy["Statement"]) == 2
 
-        statement = policy["Statement"][0]
-        assert statement["Effect"] == "Allow"
-        assert "s3:PutObject" in statement["Action"]
-        assert "s3:GetObject" in statement["Action"]
-        assert "s3:ListBucket" in statement["Action"]
-        assert "s3:DeleteObject" in statement["Action"]
-        assert "cloudfront:CreateInvalidation" in statement["Action"]
-        assert "cloudfront:GetInvalidation" in statement["Action"]
+        s3_statement, cloudfront_statement = policy["Statement"]
+        assert s3_statement["Effect"] == "Allow"
+        assert "s3:PutObject" in s3_statement["Action"]
+        assert "s3:GetObject" in s3_statement["Action"]
+        assert "s3:ListBucket" in s3_statement["Action"]
+        assert "s3:DeleteObject" in s3_statement["Action"]
+        assert "arn:aws:s3:::test-bucket" in s3_statement["Resource"]
+        assert "arn:aws:s3:::test-bucket/*" in s3_statement["Resource"]
+        assert not any(action.startswith("cloudfront:") for action in s3_statement["Action"])
 
-        assert "arn:aws:s3:::test-bucket" in statement["Resource"]
-        assert "arn:aws:s3:::test-bucket/*" in statement["Resource"]
-        assert "arn:aws:cloudfront::123456789012:distribution/E1234567890123" in statement["Resource"]
+        assert cloudfront_statement["Effect"] == "Allow"
+        assert "cloudfront:CreateInvalidation" in cloudfront_statement["Action"]
+        assert "cloudfront:GetInvalidation" in cloudfront_statement["Action"]
+        assert "arn:aws:cloudfront::123456789012:distribution/E1234567890123" in cloudfront_statement["Resource"]
 
     def test_generate_needed_permissions_sts_error(self):
         mock_session, _, _ = mock_boto_session()
@@ -257,8 +275,21 @@ class TestAWS:
             policy = json.loads(policy_json)
 
         # Should use placeholder account ID
-        statement = policy["Statement"][0]
+        statement = policy["Statement"][1]
         assert "arn:aws:cloudfront::YOUR_ACCOUNT_ID:distribution/E1234567890123" in statement["Resource"]
+
+    def test_generate_needed_permissions_without_cache(self):
+        mock_session, _, _ = mock_boto_session()
+
+        with patch("sobe.aws.boto3.Session") as mock_session_class:
+            mock_session_class.return_value = mock_session
+            aws = AWS(make_target(cache=None))
+            policy = json.loads(aws.generate_needed_permissions())
+
+        assert len(policy["Statement"]) == 1
+        assert "cloudfront" not in json.dumps(policy)
+        # No CloudFront client and no STS lookup are needed for a cache-less target.
+        mock_session.client.assert_not_called()
 
     def test_list_year_directory(self):
         mock_session, mock_bucket, _ = mock_boto_session()

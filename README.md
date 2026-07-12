@@ -2,7 +2,7 @@
 
 [![Documentation Status](https://readthedocs.org/projects/sobe/badge/?version=latest)](https://sobe.readthedocs.io/en/latest/)
 
-A simple command-line tool to upload files to an AWS S3 bucket that is publicly available through a CloudFront distribution. This is the traditional "drop box" use case that existed long before the advent of modern file sharing services.
+A simple command-line tool to upload files to an AWS S3 bucket, typically one served publicly through a CloudFront distribution (the CDN part is optional). This is the traditional "drop box" use case that existed long before the advent of modern file sharing services.
 
 Full documentation: https://sobe.readthedocs.io/en/latest/
 
@@ -26,15 +26,21 @@ pip install sobe
 
 ## Configuration
 
-On first run, `sobe` will create its config file as appropriate to the platform and tell you its location. You'll need to edit this file with your AWS bucket and CloudFront details.
+On first run, `sobe` will create its config file as appropriate to the platform and tell you its location. You'll need to edit this file with at least your AWS bucket details; a public URL and a CloudFront distribution are optional, and you can define several named targets.
 
 Here's a minimal set up.
 
 ```toml
+[target.main]
 url = "https://example.com/"
-[aws]
+
+[target.main.storage]
+type = "aws_s3"
 bucket = "your-bucket-name"
-cloudfront = "your-cloudfront-distribution-id"
+
+[target.main.cache]
+type = "aws_cloudfront"
+distribution = "your-cloudfront-distribution-id"
 ```
 
 [More information in the docs.](https://sobe.readthedocs.io/en/latest/configuration.html)
