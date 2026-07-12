@@ -1,0 +1,9 @@
+{
+  "feature": "multi-target",
+  "status": "ready",
+  "current_step": 0,
+  "total_steps": 21,
+  "completed_steps": [],
+  "errors": [],
+  "notes": "Phase 1 + Phase 2 + Phase 3 (two-round critic) all complete. Round 1: 3 blockers + 7 warnings. Round 2 (fresh-eyes): 0 blockers + 4 warnings; independently verified Round 1 fixes, template parses via tomllib, no orphaned test patch targets, 1.0 flag reservations honored. All applied; steps 19b (CLAUDE.md) and 19c (1.0-release.md wizard reconciliation) added."
+}
