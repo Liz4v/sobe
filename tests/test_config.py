@@ -88,9 +88,17 @@ class TestTarget:
         with_cache = config.Target.from_dict("main", raw)
         assert with_cache.url is None and with_cache.cache is not None
 
+    def test_non_table_target_error(self):
+        with pytest.raises(config.ConfigError, match=r'Target "main" must be a table.*\[target\.main\]'):
+            config.Target.from_dict("main", "oops")
+
     def test_missing_storage_error(self):
         with pytest.raises(config.ConfigError, match=r'Target "main" has no storage'):
             config.Target.from_dict("main", {"url": "https://x.example/"})
+
+    def test_non_table_cache_error(self):
+        with pytest.raises(config.ConfigError, match=r"cache must be a table"):
+            config.Target.from_dict("main", make_target_dict(cache="oops"))
 
     def test_empty_url_error(self):
         with pytest.raises(config.ConfigError, match="url must be a non-empty string"):
@@ -192,7 +200,7 @@ class TestTomlEmitter:
         assert "by hand" in str(excinfo.value)
 
     def test_escaping_round_trips_through_tomllib(self):
-        nasty = 'quo"te back\\slash tab\tnewline\ncontrol\x01/'
+        nasty = 'quo"te back\\slash tab\tnewline\ncarriage\rreturn control\x01/'
         target = config.Target(
             name="main",
             storage=config.StorageConfig(type="aws_s3", bucket=nasty),
@@ -289,6 +297,19 @@ class TestLoadConfig:
         rewritten = tomllib.loads(self.path.read_text())
         assert "aws" not in rewritten
         assert rewritten["default"] == "main"
+
+    def test_both_aws_and_target_tables_is_new_schema(self):
+        """A hand-made file with both [aws] and [target.*] is new schema; the stray [aws] is ignored."""
+        content = config.DEFAULT_TEMPLATE.lstrip().replace("example-bucket", "real-bucket")
+        content += '\n[aws]\nbucket = "stray-bucket"\ncloudfront = "E33333"\n'
+        self.path.write_text(content)
+
+        cfg, migration = config.load_config()
+
+        assert migration is None
+        assert cfg.select(None).storage.bucket == "real-bucket"
+        assert self.path.read_text() == content
+        assert not (self.dir / "config.toml.bak").exists()
 
     def test_migrated_file_not_remigrated(self):
         self.path.write_text(OLD_SCHEMA_REAL)
