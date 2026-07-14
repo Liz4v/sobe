@@ -1,9 +1,0 @@
-{
-  "feature": "prefix-flag-rename",
-  "status": "ready",
-  "current_step": 0,
-  "total_steps": 9,
-  "completed_steps": [],
-  "errors": [],
-  "notes": "Phase 1 + Phase 2 + Phase 3 (two-round critic) all complete. Round 1: 1 blocker + 3 warnings. Round 2 (fresh-eyes): 0 blockers + 2 warnings (+2 notes, applied). All applied; audit trail in CriticReview.md."
-}

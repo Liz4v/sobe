@@ -14,16 +14,17 @@ class TestParseArgs:
         args = parse_args(["--policy"])
         assert args.policy is True
         assert args.year is None
+        assert args.prefix is None
         assert args.invalidate is False
         assert args.delete is False
         assert args.files == []
 
     def test_parse_args_policy_with_other_args_error(self):
         with pytest.raises(SystemExit) as risen:
-            parse_args(["--policy", "--year", "2023"])
+            parse_args(["--policy", "--prefix", "2023"])
         assert risen.value.code != 0
 
-    def test_parse_args_with_year_and_files(self):
+    def test_parse_args_with_prefix_and_files(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
             file1 = temp_path / "file1.txt"
@@ -31,16 +32,15 @@ class TestParseArgs:
             file1.write_text("test1")
             file2.write_text("test2")
 
-            args = parse_args(["--year", "2023", str(file1), str(file2)])
+            args = parse_args(["--prefix", "2023", str(file1), str(file2)])
 
-        assert args.year == "2023"
         assert args.prefix == "2023/"
         assert args.files == [str(file1), str(file2)]
         assert len(args.paths) == 2
         assert args.paths[0] == file1
         assert args.paths[1] == file2
 
-    def test_parse_args_default_year(self):
+    def test_parse_args_default_prefix(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
             file1 = temp_path / "file1.txt"
@@ -50,13 +50,12 @@ class TestParseArgs:
                 mock_date.today.return_value.year = 2025
                 args = parse_args([str(file1)])
 
-        assert args.year == "2025"
         assert args.prefix == "2025/"
         assert args.files == [str(file1)]
 
-    def test_parse_args_year_without_files_error(self):
+    def test_parse_args_prefix_without_files_error(self):
         with pytest.raises(SystemExit) as risen:
-            parse_args(["--year", "2023"])
+            parse_args(["--prefix", "2023"])
         assert risen.value.code != 0
 
     def test_parse_args_delete_without_files_error(self):
@@ -91,14 +90,12 @@ class TestParseArgs:
             args = parse_args(["--list"])
 
         assert args.list is True
-        assert args.year == "2025"
         assert args.prefix == "2025/"
         assert args.files == []
 
-    def test_parse_args_list_with_year(self):
-        args = parse_args(["--list", "--year", "2024"])
+    def test_parse_args_list_with_prefix(self):
+        args = parse_args(["--list", "--prefix", "2024"])
         assert args.list is True
-        assert args.year == "2024"
         assert args.prefix == "2024/"
 
     def test_parse_args_list_with_delete_error(self):
@@ -158,19 +155,16 @@ class TestParseArgs:
         assert args.paths[0] == file1
         assert args.paths[1] == file2
 
-    def test_year_empty_string(self):
-        args = parse_args(["--list", "--year", ""])
-        assert args.year == ""
+    def test_prefix_empty_string(self):
+        args = parse_args(["--list", "--prefix", ""])
         assert args.prefix == ""
 
-    def test_year_subfolder(self):
-        args = parse_args(["--list", "--year", "2024/subfolder"])
-        assert args.year == "2024/subfolder"
+    def test_prefix_subfolder(self):
+        args = parse_args(["--list", "--prefix", "2024/subfolder"])
         assert args.prefix == "2024/subfolder/"
 
-    def test_year_subfolder_trailing_slash(self):
-        args = parse_args(["--list", "--year", "2024/subfolder/"])
-        assert args.year == "2024/subfolder/"
+    def test_prefix_subfolder_trailing_slash(self):
+        args = parse_args(["--list", "--prefix", "2024/subfolder/"])
         assert args.prefix == "2024/subfolder/"
 
     # --remote-name tests
@@ -249,7 +243,7 @@ class TestParseArgs:
 
     def test_parse_args_policy_with_target_and_more_error(self):
         with pytest.raises(SystemExit) as risen:
-            parse_args(["--policy", "--target", "alpha", "--year", "2024"])
+            parse_args(["--policy", "--target", "alpha", "--prefix", "2024"])
         assert risen.value.code != 0
 
     def test_parse_args_target_alone_error(self):
@@ -284,6 +278,156 @@ class TestParseArgs:
         assert args.target == "image/png"  # rejected later by selection: "/" is not a valid target name
         assert args.content_type is None
 
+    # -p/--prefix and -y/--year alias tests
+
+    def test_year_alias_works_and_warns_on_stderr_once(self, capsys):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            file1 = Path(temp_dir) / "file1.txt"
+            file1.write_text("test")
+            args = parse_args(["--year", "2024", str(file1)])
+
+        assert args.prefix == "2024/"
+        captured = capsys.readouterr()
+        assert captured.err.count("warning: --year is deprecated, use --prefix; it will be removed in sobe 2.0") == 1
+        assert "warning:" not in captured.out
+
+    def test_year_alias_works_with_list_and_warns_once(self, capsys):
+        args = parse_args(["--year", "2024", "--list"])
+
+        assert args.prefix == "2024/"
+        captured = capsys.readouterr()
+        assert captured.err.count("warning: --year is deprecated") == 1
+        assert "warning:" not in captured.out
+
+    def test_prefix_and_year_conflict_error(self):
+        with pytest.raises(SystemExit) as risen:
+            parse_args(["--prefix", "2024", "--year", "2025", "f.txt"])
+        assert risen.value.code == 2
+
+    def test_prefix_and_year_conflict_error_short_form(self):
+        with pytest.raises(SystemExit) as risen:
+            parse_args(["-p", "2024", "-y", "2025", "f.txt"])
+        assert risen.value.code == 2
+
+    def test_parse_args_prefix_short_form(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            file1 = Path(temp_dir) / "file1.txt"
+            file1.write_text("test")
+            args = parse_args(["-p", "2024", str(file1)])
+
+        assert args.prefix == "2024/"
+
+    def test_parse_args_bare_dash_p_no_value_error(self):
+        with pytest.raises(SystemExit) as risen:
+            parse_args(["-p"])
+        assert risen.value.code == 2
+
+    def test_dash_p_no_longer_means_policy(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            file1 = Path(temp_dir) / "file1.txt"
+            file1.write_text("test")
+            args = parse_args(["-p", "2024", str(file1)])
+
+        assert args.policy is False
+        assert args.prefix == "2024/"
+
+    def test_dash_p_muscle_memory_file_txt_hits_requires_files_error(self):
+        # 0.x --policy habit: `-p file.txt` now consumes file.txt as the prefix value,
+        # leaving no positional files, so it hits the requires-files-or-list error.
+        with pytest.raises(SystemExit) as risen:
+            parse_args(["-p", "file.txt"])
+        assert risen.value.code == 2
+
+    # Leading-slash normalization
+
+    def test_prefix_leading_slash_is_root(self):
+        args = parse_args(["--list", "--prefix", "/"])
+        assert args.prefix == ""
+
+    def test_prefix_double_leading_slash_is_root(self):
+        args = parse_args(["--list", "--prefix", "//"])
+        assert args.prefix == ""
+
+    def test_prefix_leading_slash_with_value(self):
+        args = parse_args(["--list", "--prefix", "/2024"])
+        assert args.prefix == "2024/"
+
+    def test_prefix_double_leading_slash_with_trailing_slash(self):
+        args = parse_args(["--list", "--prefix", "//2024/"])
+        assert args.prefix == "2024/"
+
+    def test_year_alias_leading_slash_normalizes_and_warns(self, capsys):
+        args = parse_args(["--list", "--year", "/"])
+
+        assert args.prefix == ""
+        captured = capsys.readouterr()
+        assert "warning: --year is deprecated" in captured.err
+
+    def test_prefix_slash_alone_errors(self):
+        # Unlike `--prefix ''` alone (frozen help-and-exit-0 quirk), `/` is truthy
+        # before stripping, so this hits the requires-files-or-list validation error.
+        with pytest.raises(SystemExit) as risen:
+            parse_args(["--prefix", "/"])
+        assert risen.value.code == 2
+
+    def test_prefix_slash_alone_with_file_is_root_upload(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            file1 = Path(temp_dir) / "index.html"
+            file1.write_text("<html></html>")
+            args = parse_args(["--prefix", "/", str(file1)])
+
+        assert args.prefix == ""
+        assert args.paths == [file1]
+
+    def test_year_alias_slash_with_file_is_root_upload_and_warns(self, capsys):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            file1 = Path(temp_dir) / "index.html"
+            file1.write_text("<html></html>")
+            args = parse_args(["--year", "/", str(file1)])
+
+        assert args.prefix == ""
+        captured = capsys.readouterr()
+        assert "warning: --year is deprecated" in captured.err
+
+    def test_year_alias_empty_string_root_upload_and_warns(self, capsys):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            file1 = Path(temp_dir) / "index.html"
+            file1.write_text("<html></html>")
+            args = parse_args(["-y", "", str(file1)])
+
+        assert args.prefix == ""
+        captured = capsys.readouterr()
+        assert "warning: --year is deprecated" in captured.err
+
+    # --help output
+
+    def test_help_output_shows_prefix_and_deprecated_year(self, capsys):
+        with pytest.raises(SystemExit) as risen:
+            parse_args(["--help"])
+
+        assert risen.value.code == 0
+        captured = capsys.readouterr()
+        assert "--prefix" in captured.out
+        assert "deprecated alias for --prefix (removed in 2.0)" in captured.out
+
+    # Validation error wording
+
+    def test_prefix_requires_files_error_message(self, capsys):
+        with pytest.raises(SystemExit) as risen:
+            parse_args(["--prefix", "2024"])
+
+        assert risen.value.code == 2
+        captured = capsys.readouterr()
+        assert "--prefix requires files or --list to be specified" in captured.err
+
+    def test_year_alias_requires_files_error_message(self, capsys):
+        with pytest.raises(SystemExit) as risen:
+            parse_args(["--year", "2024"])
+
+        assert risen.value.code == 2
+        captured = capsys.readouterr()
+        assert "--prefix requires files or --list to be specified" in captured.err
+
 
 def make_config(*names: str, url: str | None = "https://example.com/", cache=True, default=None) -> Config:
     """New-schema Config with the given targets (default: one named "main")."""
@@ -309,7 +453,7 @@ class TestMain:
         self,
         *files: str,
         policy=False,
-        year="2025",
+        prefix="2025/",
         invalidate=False,
         delete=False,
         lst=False,
@@ -319,8 +463,8 @@ class TestMain:
     ) -> Namespace:
         return Namespace(
             policy=policy,
-            year=year,
-            prefix=f"{year}/" if year else "",
+            year=None,
+            prefix=prefix,
             invalidate=invalidate,
             delete=delete,
             list=lst,

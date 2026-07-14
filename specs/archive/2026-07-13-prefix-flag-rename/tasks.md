@@ -6,7 +6,7 @@
 
 ### Layer: CLI (`src/sobe/main.py`)
 
-- [ ] Step 1: Rewire flag registration in `parse_args()` — add
+- [x] Step 1: Rewire flag registration in `parse_args()` — add
   `-p/--prefix` (help: `set remote directory (usually a year)`) in the slot
   where `-y/--year` sits today; re-register `-y/--year` directly after it
   with help `deprecated alias for --prefix (removed in 2.0)`; make `--policy`
@@ -15,7 +15,7 @@
   `import sys` to the module imports. Done when: `parse_args(["--help"])`
   output shows the new flag layout (manual check; asserted by tests in
   Step 5).
-- [ ] Step 2: Add the alias-consolidation block immediately after
+- [x] Step 2: Add the alias-consolidation block immediately after
   `parser.parse_args(argv)` and before the `num_arg_types` line: if
   `args.year is not None` — error out via `parser.error("--prefix and --year
   cannot be used at the same time")` when `args.prefix` is also not None
@@ -25,7 +25,7 @@
   removed in sobe 2.0` to `sys.stderr` and copy `args.year` into
   `args.prefix`. Done when: alias invocations behave identically to `--prefix`
   and the conflict errors with exit 2.
-- [ ] Step 3: Replace the `args.year` validation/normalization block,
+- [x] Step 3: Replace the `args.year` validation/normalization block,
   operating directly on `args.prefix` (the `--prefix` flag's own dest, no
   separate intermediate attribute) — default to current year when None;
   error message reworded to `--prefix requires files or --list to be
@@ -41,7 +41,7 @@
 
 ### Layer: Tests (`tests/test_main.py`)
 
-- [ ] Step 4: Migrate existing tests to the new surface — rename
+- [x] Step 4: Migrate existing tests to the new surface — rename
   primary-semantics `TestParseArgs` tests from `--year` spellings and
   `args.year` assertions to `--prefix`/`args.prefix`. Two non-obvious cases:
   (a) after the change `args.year` is `None` unless the alias was typed, so
@@ -63,7 +63,7 @@
   kwarg holds the final normalized value directly, no separate raw field;
   `year=None`). Done when: full suite passes with no test still exercising
   primary semantics through the alias.
-- [ ] Step 5: Add new tests covering the contract — (a) `-y`/`--year` alias
+- [x] Step 5: Add new tests covering the contract — (a) `-y`/`--year` alias
   works everywhere `--prefix` does (upload-shape and `--list`) and emits the
   exact warning line on **stderr** (capsys: `err` contains it, `out` does
   not) exactly once; (b) `--prefix X --year Y` → SystemExit code 2, in both
@@ -86,7 +86,7 @@
 
 ### Layer: Documentation
 
-- [ ] Step 6: Update `docs/usage.md` — retitle/reword the "different
+- [x] Step 6: Update `docs/usage.md` — retitle/reword the "different
   directory" section around `--prefix`; convert all `--year` examples to
   `--prefix`; replace the `--year ''` root example with `--prefix /` as the
   recommended root spelling (keep `''` mentioned as equivalent); update the
@@ -98,12 +98,12 @@
   deleted through sobe; removing them requires the AWS console or CLI.
   Keep the page ASCII-only. Done when: no `--year` example remains except
   in the deprecation note.
-- [ ] Step 7: Update `specs/1.0-release.md` — annotate item 3's `--prefix`
+- [x] Step 7: Update `specs/1.0-release.md` — annotate item 3's `--prefix`
   decision and open question 1 as implemented via `specs/prefix-flag-rename/`,
   recording the settled 2.0 removal timeline and the leading-slash
   normalization. Done when: a reader of item 3 sees the work is shipped, not
   pending.
-- [ ] Step 8: Update `AGENTS.md` (CLAUDE.md symlinks to it) — in the
+- [x] Step 8: Update `AGENTS.md` (CLAUDE.md symlinks to it) — in the
   Architecture section's CLI notes: `-p` belongs to `--prefix`, `--policy` is
   long-only, `-y/--year` are deprecated aliases (removed in 2.0); drop
   "`--year` naming" from the open-decisions example so the file stops
@@ -112,7 +112,7 @@
 
 ### Layer: Verification
 
-- [ ] Step 9: Run the full gate — `uv run pytest` (coverage ≥95% enforced),
+- [x] Step 9: Run the full gate — `uv run pytest` (coverage ≥95% enforced),
   `uv run ruff check`, `uv run ruff format --check`, and
   `grep -rnP '[^\x00-\x7F]' docs --include='*.md'` (must be empty). Done
   when: all four pass clean.

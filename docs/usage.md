@@ -40,21 +40,30 @@ https://example.com/2025/file1.txt ...ok.
 https://example.com/2025/image.png ...ok.
 ```
 
-Specify a different directory ("year") value. It can be anything. Some examples:
+Specify a different remote directory prefix (the flag is usually used for a year, but the value can be anything). Some examples:
 
 ```console
-$ sobe --year 2024 file1.txt
+$ sobe --prefix 2024 file1.txt
 https://example.com/2024/file1.txt ...ok.
 
-$ sobe --year f/g/h i.jpg
+$ sobe --prefix f/g/h i.jpg
 https://example.com/f/g/h/i.jpg ...ok.
 
-$ sobe --year 2020/05/15 we-hate-wordpress.html
-https://example.com/2020/05/15/we-hate-wordpress.html ...ok.
+$ sobe --prefix 2020/05/15 i-dislike-wordpress.html
+https://example.com/2020/05/15/i-dislike-wordpress.html ...ok.
 
-$ sobe --year '' index.html
+$ sobe --prefix / index.html
 https://example.com/index.html ...ok.
 ```
+
+> **Warning:** Major version breaking changes.
+>
+> In sobe 0.x:
+> * `-p` used to mean `--policy`, but in 1.x it means `--prefix`
+> * Leading slashes were not removed back then. S3 keys like `/2024/file1.txt` are "valid", but only partly functional. The correct key in that example is `2024/file1.txt`. Those objects are now inacessible by sobe, but you can still remove them directly.
+>
+> In sobe 1.x:
+> * `-y`/`--year` are deprecated aliases for `-p`/`--prefix`, to be removed in 2.0.
 
 Upload to a specific target when the config defines more than one (see [Configuration](configuration.md) for defining targets). Without `-t`/`--target`, the config's `default` target is used:
 
@@ -87,10 +96,10 @@ $ sobe --remote-name index.html local-dev-index.tmp
 https://example.com/2025/index.html ...ok.
 ```
 
-Example with `--year` for placement under another prefix:
+Example with `--prefix` for placement under another prefix:
 
 ```console
-$ sobe --year 2024 --remote-name avatar.png profile-picture-latest.png
+$ sobe --prefix 2024 --remote-name avatar.png profile-picture-latest.png
 https://example.com/2024/avatar.png ...ok.
 ```
 
@@ -136,14 +145,14 @@ https://example.com/2025/image.png
 List files for a specific directory (same rules as above):
 
 ```console
-$ sobe --list --year 2024
+$ sobe --list --prefix 2024
 https://example.com/2024/old_upload.txt
 https://example.com/2024/q1/
 
-$ sobe --list --year 2024/q1
+$ sobe --list --prefix 2024/q1
 https://example.com/2024/q1/report.pdf
 
-$ sobe --list --year ''
+$ sobe --list --prefix /
 https://example.com/2024/
 https://example.com/2025/
 https://example.com/index.html

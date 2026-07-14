@@ -5,6 +5,7 @@ import datetime
 import functools
 import importlib.metadata
 import pathlib
+import sys
 import warnings
 
 import urllib3.exceptions
@@ -82,15 +83,23 @@ def parse_args(argv=None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Upload files to your AWS drop box.")
     parser.add_argument("--version", action="version", version=f"sobe {get_version()}")
     parser.add_argument("-t", "--target", type=str, help="select the configured target to operate on")
-    parser.add_argument("-y", "--year", type=str, help="set remote directory (usually a year)")
+    parser.add_argument("-p", "--prefix", type=str, help="set remote directory (usually a year)")
+    parser.add_argument("-y", "--year", type=str, help="deprecated alias for --prefix (removed in 2.0)")
     parser.add_argument("--content-type", type=str, help="override detected MIME type for uploaded files")
-    parser.add_argument("-l", "--list", action="store_true", help="list all files in the year")
+    parser.add_argument("-l", "--list", action="store_true", help="list all files in the prefix")
     parser.add_argument("-d", "--delete", action="store_true", help="delete instead of upload")
     parser.add_argument("-i", "--invalidate", action="store_true", help="invalidate CloudFront cache")
-    parser.add_argument("-p", "--policy", action="store_true", help="generate IAM policy requirements and exit")
+    parser.add_argument("--policy", action="store_true", help="generate IAM policy requirements and exit")
     parser.add_argument("-r", "--remote-name", type=str, help="upload a single file with a different remote name")
     parser.add_argument("files", nargs="*", help="Source files.")
     args = parser.parse_args(argv)
+
+    if args.year is not None:
+        if args.prefix is not None:
+            parser.error("--prefix and --year cannot be used at the same time")
+        print("warning: --year is deprecated, use --prefix; it will be removed in sobe 2.0", file=sys.stderr)
+        args.prefix = args.year
+
     num_arg_types = sum(map(bool, args.__dict__.values()))
 
     if num_arg_types == 0:
@@ -105,11 +114,12 @@ def parse_args(argv=None) -> argparse.Namespace:
     if args.target and not (args.files or args.list or args.invalidate):
         parser.error("--target requires an operation: files to upload or delete, --list, --invalidate, or --policy")
 
-    if args.year is None:
-        args.year = str(datetime.date.today().year)
+    if args.prefix is None:
+        args.prefix = str(datetime.date.today().year)
     elif not (args.files or args.list):
-        parser.error("--year requires files or --list to be specified")
-    args.prefix = args.year if args.year == "" or args.year.endswith("/") else f"{args.year}/"
+        parser.error("--prefix requires files or --list to be specified")
+    args.prefix = args.prefix.lstrip("/")
+    args.prefix = args.prefix if args.prefix == "" or args.prefix.endswith("/") else f"{args.prefix}/"
 
     if args.content_type or args.remote_name:
         if args.delete or args.list:

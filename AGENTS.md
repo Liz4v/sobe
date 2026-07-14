@@ -26,7 +26,7 @@ Three modules in `src/sobe/`, with a deliberate separation:
 
 Flow: `main()` loads config → prints migration notice if any → parses args → `config.select(args.target)` → constructs `AWS(target)` → dispatches on flags (`--policy`, `--list`, upload/`--delete`, then optional `--invalidate`, skipped with a notice on cache-less targets).
 
-The flag-combination validation in `parse_args()` is intricate (which flags require/exclude files, `--remote-name` single-file rule, `-t/--target` requiring an operation but combining with `--policy`, etc.) — read it before touching CLI behavior. `-t` belongs to `--target`; `--content-type` is long-only. A 1.0 release spec in `specs/1.0-release.md` treats the CLI surface as a compatibility contract and tracks open decisions (e.g. `--year` naming, type checker choice).
+The flag-combination validation in `parse_args()` is intricate (which flags require/exclude files, `--remote-name` single-file rule, `-t/--target` requiring an operation but combining with `--policy`, etc.) — read it before touching CLI behavior. `-t` belongs to `--target`; `--content-type` is long-only. `-p` belongs to `--prefix`; `--policy` is long-only. `-y`/`--year` are deprecated aliases for `--prefix` (removed in 2.0). A 1.0 release spec in `specs/1.0-release.md` treats the CLI surface as a compatibility contract and tracks open decisions (e.g. type checker choice).
 
 ## Conventions
 
