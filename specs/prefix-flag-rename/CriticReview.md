@@ -1,8 +1,20 @@
-# Critic Review: `-p/--path` rename (CLI 1.0 freeze, final item)
+# Critic Review: `-p/--prefix` rename (CLI 1.0 freeze, final item)
 
 > Phase 3 — Plan stress-test. Approved before coding begins.
 > This review went through two rounds. Round 1 = self-critique.
 > Round 2 = fresh-eyes adversarial pass by an independent agent.
+
+> **Post-review naming update (2026-07-13):** both review rounds below were
+> conducted against a design named `-p/--path` with a two-hop
+> `year -> args.path -> args.prefix` value flow. Before implementation began,
+> the flag was renamed to `-p/--prefix`, which let the design collapse to a
+> single `args.prefix` attribute (no intermediate `path` field) — see
+> Architect.md's "Validation + normalization" section. This is a strict
+> simplification, not a new design surface: it removes the `args.path` vs
+> `args.paths` collision that Round 2 flagged as R2-W2 below rather than
+> introducing a new one. Nothing else in either round's findings changed in
+> substance. Quotes below of literal old text (e.g. `-p, --path`) are kept
+> verbatim as an accurate historical record of what was reviewed at the time.
 
 ## Round 2 (fresh-eyes) — findings
 
@@ -21,15 +33,15 @@ None found.
 
 | ID | Finding | Where fixed |
 |----|---------|-------------|
-| R2-W1 | Step 4's migration enumeration omitted `test_parse_args_year_without_files_error` (spells `--year`, asserts neither `args.year` nor `--policy`, so it fell through both enumerated cases); relatedly, no Step 5 item covered the Analyst edge row "`--year 2024` with no files and no `--list`" through the alias. | tasks.md Step 4 case (b) now lists the test; Step 5(g) now asserts the requires-files error through both `--path` and `--year` spellings |
+| R2-W1 | Step 4's migration enumeration omitted `test_parse_args_year_without_files_error` (spells `--year`, asserts neither `args.year` nor `--policy`, so it fell through both enumerated cases); relatedly, no Step 5 item covered the Analyst edge row "`--year 2024` with no files and no `--list`" through the alias. | tasks.md Step 4 case (b) now lists the test; Step 5(g) now asserts the requires-files error through both `--prefix` and `--year` spellings |
 | R2-W2 | The one-letter `args.path` (new str) vs `args.paths` (existing `list[Path]`, main.py:130/63) collision was nowhere acknowledged — a prime typo/drift spot, especially in `_mock_args`. Also Architect.md's "`main()` consumes only `args.prefix` and flags" was inaccurate (it also reads `paths`, `remote_name`, `content_type`), though the no-change conclusion still holds. | Architect.md: corrected the `main()` consumption sentence + hazard note in "Data Model Changes"; tasks.md Step 4 warns about the distinction |
 
 ### Round 2 Notes (applied — both were cheap)
 
 | ID | Finding | Where fixed |
 |----|---------|-------------|
-| R2-N1 | Conflict-error wording `"cannot be used together"` diverged from the existing parser pattern `"cannot be used at the same time"` (main.py:123). | Architect.md snippet + CLI contract row + tasks.md Step 2 now use `"--path and --year cannot be used at the same time"` |
-| R2-N2 | Undocumented asymmetry: `--path ''` alone prints help and exits 0 (frozen quirk) while the newly recommended `--path /` alone errors with exit 2 (truthy at the flag count, falsy only after `lstrip`). Defensible but absent from the edge table. | Analyst.md edge table gained the row; tasks.md Step 5(e) tests it |
+| R2-N1 | Conflict-error wording `"cannot be used together"` diverged from the existing parser pattern `"cannot be used at the same time"` (main.py:123). | Architect.md snippet + CLI contract row + tasks.md Step 2 now use `"--prefix and --year cannot be used at the same time"` |
+| R2-N2 | Undocumented asymmetry: `--prefix ''` alone prints help and exits 0 (frozen quirk) while the newly recommended `--prefix /` alone errors with exit 2 (truthy at the flag count, falsy only after `lstrip`). Defensible but absent from the edge table. | Analyst.md edge table gained the row; tasks.md Step 5(e) tests it |
 
 ### Round 2 overrode Round 1
 
@@ -43,8 +55,9 @@ None — no Round 2 fix touched anything Round 1 changed.
 - docs/usage.md content matches Step 6's inventory; Files-to-Modify is
   complete across README, docs/, docs/api/, `.github/`, and src/.
 - No contradiction with `specs/1.0-release.md` or the archived
-  multi-target spec — the latter explicitly reserved `-p`/`--path` for
-  this promotion (archive/2026-07-12-multi-target/Architect.md:254).
+  multi-target spec — the latter explicitly reserved `-p`/`--path` (the
+  archive predates this spec's later `--prefix` rename and is frozen text)
+  for this promotion (archive/2026-07-12-multi-target/Architect.md:254).
 - No project-rule violations (stdout discipline exception sanctioned,
   ruff 120, coverage, markers, no `warnings.filterwarnings` interaction).
 
@@ -74,13 +87,13 @@ explicitly dispatched below.
 |----|------|---------|-------------|
 | R1-W1 | Completeness | `-l/--list` help text `"list all files in the year"` (main.py:87) is user-facing text tied to the old flag's concept; neither spec file updated it. | tasks.md Step 1 + Architect.md Approach item 1: reword to `"list all files in the path"` |
 | R1-W2 | Data integrity / Docs | Leading-slash stripping makes legacy footgun keys (e.g. `/2024/f.txt` created by 0.x) unreachable through sobe — in 0.x `-y /2024 --delete f.txt` could delete them; in 1.0 nothing can. Deliberate, but the cleanup-path loss was undocumented. | tasks.md Step 6 (docs note: clean legacy keys via AWS console/CLI); Architect.md Risks bullet |
-| R1-W3 | Testing | Step 4's migration list was generic; two non-obvious cases needed calling out: (a) post-change `args.year` is `None` unless the alias was typed, so six tests asserting `args.year` values must move to `args.path`; (b) the two policy-combination tests spelling `--year` should migrate to `--path` to test the frozen contract through the primary flag. | tasks.md Step 4 enumerates both cases with test names |
+| R1-W3 | Testing | Step 4's migration list was generic; two non-obvious cases needed calling out: (a) post-change `args.year` is `None` unless the alias was typed, so six tests asserting `args.year` values must move to `args.path`; (b) the two policy-combination tests spelling `--year` should migrate to `--prefix` to test the frozen contract through the primary flag. | tasks.md Step 4 enumerates both cases with test names |
 
 ### Notes
 
 | ID | Finding | Disposition |
 |----|---------|-------------|
-| R1-N1 | argparse abbreviation `--p` was unambiguous for `--policy` in 0.x; adding `--path` makes it ambiguous (argparse errors). Abbreviations are undocumented surface. | Accepted, no action |
+| R1-N1 | argparse abbreviation `--p` was unambiguous for `--policy` in 0.x; adding `--prefix` makes it ambiguous (argparse errors). Abbreviations are undocumented surface. | Accepted, no action |
 | R1-N2 | Rollback strategy was undocumented. | Applied — "Rollback" section added to Architect.md (cheap) |
 | R1-N3 | `sobe --year X --version` exits inside argparse before the consolidation block, so no deprecation warning is emitted. Non-contractual per Analyst.md. | Accepted, no action |
 
@@ -90,7 +103,7 @@ explicitly dispatched below.
   against both consumer branches with the real namespace
   (`target, year, path, content_type, list, delete, invalidate, policy,
   remote_name, files`). Help-at-zero: consolidation copies falsy to falsy,
-  so `--path ''` alone mirrors the existing `--year ''` help quirk; no new
+  so `--prefix ''` alone mirrors the existing `--year ''` help quirk; no new
   reachability. `--policy` count check: alias double-count only inflates
   invocations already rejected; `--policy --target x --year ''` stays
   accepted (both values falsy) with a stderr warning — explicitly

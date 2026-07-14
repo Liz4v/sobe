@@ -1,31 +1,31 @@
-# Delta: `-p/--path` rename (CLI 1.0 freeze, final item)
+# Delta: `-p/--prefix` rename (CLI 1.0 freeze, final item)
 
 > Specification delta — what changes relative to the current system.
 > Only exists when this feature modifies existing behaviour.
 
 ## ADDED
 
-- `-p <value>` / `--path <value>`: new primary flag for the remote directory,
+- `-p <value>` / `--prefix <value>`: new primary flag for the remote directory,
   semantics identical to the current `--year`.
 - Runtime deprecation warning: using `-y`/`--year` emits one line on stderr
-  naming `--path` as the replacement and 2.0 as the removal version.
-- Conflict rule: passing both `--path` and `--year` in one invocation is a
+  naming `--prefix` as the replacement and 2.0 as the removal version.
+- Conflict rule: passing both `--prefix` and `--year` in one invocation is a
   parser error (exit 2). (Previously impossible — only one flag existed.)
 - Docs note in `docs/usage.md` that `--year` is a deprecated alias removed
   in 2.0.
 - Leading-slash normalization: all leading slashes are stripped from the
-  remote-directory value, so `--path /` (recommended docs spelling) and
-  `--path //` mean the bucket root, and `--path /2024` means `2024/`.
+  remote-directory value, so `--prefix /` (recommended docs spelling) and
+  `--prefix //` mean the bucket root, and `--prefix /2024` means `2024/`.
 
 ## MODIFIED
 
-- **`-y/--year` is the documented remote-directory flag** → **`-p/--path` is
+- **`-y/--year` is the documented remote-directory flag** → **`-p/--prefix` is
   the documented flag; `-y/--year` become deprecated but functional aliases
   through 1.x, shown in `--help` marked deprecated.**
 - **`--help` and `parse_args()` error messages name `--year`** (e.g.
-  `--year requires files or --list to be specified`) → **they name `--path`.**
+  `--year requires files or --list to be specified`) → **they name `--prefix`.**
 - **`docs/usage.md` examples use `--year`, with `--year ''` shown for root
-  uploads** → **examples use `--path`, with `--path /` as the recommended
+  uploads** → **examples use `--prefix`, with `--prefix /` as the recommended
   root spelling.**
 - **A leading slash in the value produces literal leading-slash S3 keys**
   (`-y /2024 f.txt` uploads to key `/2024/f.txt`, shown as an empty-named

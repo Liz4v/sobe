@@ -1,5 +1,5 @@
 {
-  "feature": "path-flag-rename",
+  "feature": "prefix-flag-rename",
   "status": "ready",
   "current_step": 0,
   "total_steps": 9,
