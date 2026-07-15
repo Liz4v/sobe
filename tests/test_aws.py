@@ -274,9 +274,26 @@ class TestAWS:
             policy_json = aws.generate_needed_permissions()
             policy = json.loads(policy_json)
 
-        # Should use placeholder account ID
+        # Should use a wildcard account ID so the policy is still valid JSON to paste as-is
         statement = policy["Statement"][1]
-        assert "arn:aws:cloudfront::YOUR_ACCOUNT_ID:distribution/E1234567890123" in statement["Resource"]
+        assert "arn:aws:cloudfront::*:distribution/E1234567890123" in statement["Resource"]
+
+    def test_generate_needed_permissions_no_credentials(self):
+        mock_session, _, _ = mock_boto_session()
+        mock_sts = Mock()
+        mock_sts.get_caller_identity.side_effect = botocore.exceptions.NoCredentialsError()
+        mock_session.client.return_value = mock_sts
+
+        with patch("sobe.aws.boto3.Session") as mock_session_class:
+            mock_session_class.return_value = mock_session
+            aws = AWS(self.config)
+            policy_json = aws.generate_needed_permissions()
+            policy = json.loads(policy_json)
+
+        # Should fall back to a wildcard account ID rather than raising, since this is
+        # the exact scenario of running --policy before AWS credentials are configured.
+        statement = policy["Statement"][1]
+        assert "arn:aws:cloudfront::*:distribution/E1234567890123" in statement["Resource"]
 
     def test_generate_needed_permissions_without_cache(self):
         mock_session, _, _ = mock_boto_session()

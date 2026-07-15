@@ -86,8 +86,8 @@ class AWS:
             try:
                 sts = self._session.client("sts", **self.target.aws_service)
                 account_id = sts.get_caller_identity()["Account"]
-            except botocore.exceptions.ClientError:
-                account_id = "YOUR_ACCOUNT_ID"
+            except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError):
+                account_id = "*"
             statements.append(
                 {
                     "Effect": "Allow",

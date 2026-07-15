@@ -158,7 +158,7 @@ https://example.com/2025/
 https://example.com/index.html
 ```
 
-Generate the minimal IAM policy required for this tool. This command is to help setting up AWS IAM permissions for a new user or role that will use `sobe`. The output shows the minimum AWS permissions needed for all operations (upload, delete, list, and cache invalidation) on one target -- the selected (or default) one; `--policy` combines with `--target` but with no other flag. The CloudFront statement is omitted for a target without a cache. Copy this JSON and use it when creating or modifying IAM policies in the AWS Console or via AWS CLI:
+Generate the minimal IAM policy required for this tool. This command is to help setting up AWS IAM permissions for a new user or role that will use `sobe`. The output shows the minimum AWS permissions needed for all operations (upload, delete, list, and cache invalidation) on one target -- the selected (or default) one; `--policy` combines with `--target` but with no other flag. The CloudFront statement is omitted for a target without a cache. The CloudFront resource ARN includes your AWS account ID, looked up via STS; if that lookup fails (for example, no credentials are configured yet), a `*` wildcard is used instead so the JSON is still valid to paste as-is. Copy this JSON and use it when creating or modifying IAM policies in the AWS Console or via AWS CLI:
 
 ```console
 $ sobe --policy
@@ -185,7 +185,7 @@ $ sobe --policy
         "cloudfront:GetInvalidation"
       ],
       "Resource": [
-        "arn:aws:cloudfront::YOUR_ACCOUNT_ID:distribution/E1111111111111"
+        "arn:aws:cloudfront::*:distribution/E1111111111111"
       ]
     }
   ]
