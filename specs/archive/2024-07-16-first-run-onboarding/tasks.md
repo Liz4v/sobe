@@ -6,7 +6,7 @@
 
 ### Layer: CLI (`src/sobe/main.py`)
 
-- [ ] Step 1: Add a module-level `TUTORIAL_URL = "https://sobe.readthedocs.io/en/latest/tutorial.html"`
+- [x] Step 1: Add a module-level `TUTORIAL_URL = "https://sobe.readthedocs.io/en/latest/tutorial.html"`
   constant near the top of `main.py` (next to the `write`/`print` partials). Extract the
   parser construction in `parse_args()` (the `ArgumentParser(...)` call plus every
   `add_argument`, moved verbatim — no definitions change) into a module-level
@@ -33,7 +33,7 @@
 
 ### Layer: CLI Tests (`tests/test_main.py`)
 
-- [ ] Step 2: Update `test_bad_config_created` and `test_bad_config_existing_unconfigured`
+- [x] Step 2: Update `test_bad_config_created` and `test_bad_config_existing_unconfigured`
   (in `TestMain`) to add `mock_print.assert_any_call("Full setup tutorial: https://sobe.readthedocs.io/en/latest/tutorial.html")`
   alongside the existing assertions. Add `bare=False` to the `Namespace` built by
   `TestMain._mock_args` — without it, every `TestMain` test dies on `args.bare` in the
@@ -49,7 +49,7 @@
   config-state-dependent; the test itself still passes unchanged). Done when: the suite
   passes against the Step 1 code and the updated assertions would fail against
   pre-Step-1 code.
-- [ ] Step 3: Add a new test class (e.g. `TestMainArgsBeforeConfig`) that does **not**
+- [x] Step 3: Add a new test class (e.g. `TestMainArgsBeforeConfig`) that does **not**
   mock `parse_args` — only patches `sobe.main.load_config` (e.g. via
   `monkeypatch.setattr("sobe.main.load_config", ...)` or a local `@patch`) with a
   `Mock(...)` so `assert_not_called()` / return values / side effects can be set per
@@ -71,7 +71,7 @@
 
 ### Layer: Documentation
 
-- [ ] Step 4: Create `docs/tutorial.md`, a full prose walkthrough fleshed out from
+- [x] Step 4: Create `docs/tutorial.md`, a full prose walkthrough fleshed out from
   [`TutorialOutline.md`](TutorialOutline.md) (same repo, under `specs/`) into a Sphinx
   page. Title `# Tutorial`. Convert each outline section into a `##` header in the same
   order: "Warnings (is Sobe for you?)", "Create an AWS account", "Create a bucket",
@@ -91,11 +91,11 @@
   Page must be ASCII-only (verify with the Step 10
   grep). Done when: the file exists, headers match the outline order 1:1, every outline
   fact/warning/value is present, and no section is just a bullet list copy-paste.
-- [ ] Step 5: In `docs/index.md`, add `tutorial` as the first entry in the existing
+- [x] Step 5: In `docs/index.md`, add `tutorial` as the first entry in the existing
   ```` ```{toctree} ```` block captioned "User Guide" (before `usage`, `configuration`).
   Done when: `docs/tutorial.md` is reachable from the built index page's left nav, first
   under "User Guide".
-- [ ] Step 6: In `docs/usage.md`, update the Installation section's first-run transcript
+- [x] Step 6: In `docs/usage.md`, update the Installation section's first-run transcript
   (the existing `$ sobe` block stays `$ sobe` — bare first run is retained) to show all
   three printed lines from Step 1's exact message text (path stays the placeholder
   `/home/user/.config/sobe/config.toml`). Add one sentence pointing to the new page, e.g.
@@ -103,7 +103,7 @@
   [Tutorial](tutorial.md)." placed near the top of Installation, before or after the
   transcript. Done when: the transcript matches Step 1's actual bare-`sobe` output with
   no config present, and a Tutorial cross-reference exists.
-- [ ] Step 7: In `docs/configuration.md`: (a) add a short parenthetical to the opening
+- [x] Step 7: In `docs/configuration.md`: (a) add a short parenthetical to the opening
   sentence ("The first time you invoke the tool, it will create a default configuration
   file...") noting that `--help` and `--version` are the exception — they answer without
   reading or creating the config file; (b) in the "Unconfigured configs" section, add a
@@ -115,13 +115,13 @@
 
 ### Layer: Project Bookkeeping
 
-- [ ] Step 8: In `AGENTS.md`, update the "Flow:" sentence in the Architecture section:
+- [x] Step 8: In `AGENTS.md`, update the "Flow:" sentence in the Architecture section:
   `main()` now parses args first, then loads config (reversing the current
   "loads config ... then parses args" order), and bare invocation prints help only after
   the config phase succeeds; keep the rest of the sentence (`config.select` ->
   `AWS(target)` -> flag dispatch) unchanged. Done when: the sentence matches Step 1's
   actual call order.
-- [ ] Step 9: In `specs/1.0-release.md`, annotate item 2 ("First-run experience:
+- [x] Step 9: In `specs/1.0-release.md`, annotate item 2 ("First-run experience:
   interactive setup wizard") as resolved — narrower tutorial-pointer approach shipped via
   `specs/first-run-onboarding/`, wizard rejected, matching the annotation style used for
   item 3 in the archived `prefix-flag-rename` spec. Also annotate open question 4
@@ -138,7 +138,7 @@
 
 ### Layer: Verification
 
-- [ ] Step 10: Run the full gate: `uv run pytest` (coverage >=95% enforced), `uv run ruff
+- [x] Step 10: Run the full gate: `uv run pytest` (coverage >=95% enforced), `uv run ruff
   check`, `uv run ruff format --check`, `grep -rnP '[^\x00-\x7F]' docs --include='*.md'`
   (must be empty), and `uv run --extra docs -m sphinx -b html docs docs/_build/html` —
   eyeball the build output for new warnings (e.g. broken toctree entry, bad `tutorial.md`

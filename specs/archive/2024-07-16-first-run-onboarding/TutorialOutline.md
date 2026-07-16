@@ -13,6 +13,7 @@ Create an AWS account:
 - Link.
 - You will get access to AWS console.
 - Use a region that makes sense for you. Remember your region. If unsure, us-east-1 (N. Virginia) works. Remember your region.
+  - [Changed during implementation (2026-07-15): region guidance moved to the "Create a bucket" section of `docs/tutorial.md`, since only the bucket is regional. The other sections now note their side of it: CloudFront and IAM are global, and ACM's region is forced to us-east-1.]
 - Use the top bar to search for AWS product names.
 - Go to Billing and Cost Management. Click Budgets. Set a hard limit.
   - A really low limit like $5 or $1 is the best place to start.

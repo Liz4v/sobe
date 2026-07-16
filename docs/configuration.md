@@ -1,6 +1,6 @@
 # Configuration
 
-The first time you invoke the tool, it will create a default configuration file and exit with a message telling you to edit the file. The file is created at the user config directory reported by `platformdirs` for the application name `sobe`.
+The first time you invoke the tool, it will create a default configuration file and exit with a message telling you to edit the file (`--help` and `--version` are the exception: they answer without reading or creating the config file). The file is created at the user config directory reported by `platformdirs` for the application name `sobe`.
 
 ## Location
 
@@ -99,7 +99,7 @@ The `type` discriminators are required so that future non-AWS providers can be a
 
 ## Unconfigured configs
 
-The config counts as unconfigured while it defines no targets, or while every target's bucket is still the placeholder `example-bucket`. In that state the tool prints the config path and exits so you can edit it. An existing file is never overwritten in this state -- only a missing file causes the template to be written.
+The config counts as unconfigured while it defines no targets, or while every target's bucket is still the placeholder `example-bucket`. In that state the tool prints the config path, along with a pointer to the onboarding [Tutorial](tutorial.md), and exits so you can edit it. An existing file is never overwritten in this state -- only a missing file causes the template to be written.
 
 ## Migration from the old single-target format
 

@@ -17,8 +17,12 @@ write = functools.partial(print, flush=True, end="")
 print = functools.partial(print, flush=True)  # type: ignore
 warnings.filterwarnings("ignore", category=urllib3.exceptions.InsecureRequestWarning)
 
+TUTORIAL_URL = "https://sobe.readthedocs.io/en/latest/tutorial.html"
+
 
 def main() -> None:
+    args = parse_args()
+
     try:
         config, migration = load_config()
     except MustEditConfig as err:
@@ -27,6 +31,7 @@ def main() -> None:
         else:
             print("The config file at the path below is not configured yet. You must edit it before use.")
         print(err.path)
+        print(f"Full setup tutorial: {TUTORIAL_URL}")
         raise SystemExit(1) from err
     except ConfigError as err:
         print(err)
@@ -36,7 +41,9 @@ def main() -> None:
         print(f"Migrated config file {migration.path} to the new multi-target format.")
         print(f"The original file was saved to {migration.backup}")
 
-    args = parse_args()
+    if args.bare:
+        _build_parser().print_help()
+        raise SystemExit(0)
 
     try:
         target = config.select(args.target)
@@ -79,7 +86,7 @@ def main() -> None:
             print("complete.")
 
 
-def parse_args(argv=None) -> argparse.Namespace:
+def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Upload files to your AWS drop box.")
     parser.add_argument("--version", action="version", version=f"sobe {get_version()}")
     parser.add_argument("-t", "--target", type=str, help="select the configured target to operate on")
@@ -92,6 +99,11 @@ def parse_args(argv=None) -> argparse.Namespace:
     parser.add_argument("--policy", action="store_true", help="generate IAM policy requirements and exit")
     parser.add_argument("-r", "--remote-name", type=str, help="upload a single file with a different remote name")
     parser.add_argument("files", nargs="*", help="Source files.")
+    return parser
+
+
+def parse_args(argv=None) -> argparse.Namespace:
+    parser = _build_parser()
     args = parser.parse_args(argv)
 
     if args.year is not None:
@@ -103,8 +115,9 @@ def parse_args(argv=None) -> argparse.Namespace:
     num_arg_types = sum(map(bool, args.__dict__.values()))
 
     if num_arg_types == 0:
-        parser.print_help()
-        raise SystemExit(0)
+        args.bare = True
+        return args
+    args.bare = False
 
     if args.policy:
         if num_arg_types != 1 + bool(args.target):

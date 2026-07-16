@@ -1,7 +1,8 @@
+import sys
 import tempfile
 from argparse import Namespace
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -63,13 +64,12 @@ class TestParseArgs:
             parse_args(["--delete"])
         assert risen.value.code != 0
 
-    def test_parse_args_no_files_no_invalidate_prints_help(self):
+    def test_parse_args_no_files_no_invalidate_returns_bare(self):
         with patch("sobe.main.argparse.ArgumentParser.print_help") as mock_help:
-            with pytest.raises(SystemExit) as risen:
-                parse_args([])
+            args = parse_args([])
 
-        assert risen.value.code == 0
-        mock_help.assert_called_once()
+        assert args.bare is True
+        mock_help.assert_not_called()
 
     def test_parse_args_invalidate_only(self):
         args = parse_args(["--invalidate"])
@@ -92,6 +92,7 @@ class TestParseArgs:
         assert args.list is True
         assert args.prefix == "2025/"
         assert args.files == []
+        assert args.bare is False
 
     def test_parse_args_list_with_prefix(self):
         args = parse_args(["--list", "--prefix", "2024"])
@@ -251,14 +252,13 @@ class TestParseArgs:
             parse_args(["--target", "alpha"])
         assert risen.value.code != 0
 
-    def test_parse_args_empty_target_alone_prints_help(self):
+    def test_parse_args_empty_target_alone_returns_bare(self):
         # An empty --target counts as not given, so this is the same as bare `sobe`.
         with patch("sobe.main.argparse.ArgumentParser.print_help") as mock_help:
-            with pytest.raises(SystemExit) as risen:
-                parse_args(["-t", ""])
+            args = parse_args(["-t", ""])
 
-        assert risen.value.code == 0
-        mock_help.assert_called_once()
+        assert args.bare is True
+        mock_help.assert_not_called()
 
     def test_parse_args_empty_target_treated_as_not_given(self):
         args = parse_args(["-t", "", "--list"])
@@ -364,8 +364,9 @@ class TestParseArgs:
         assert "warning: --year is deprecated" in captured.err
 
     def test_prefix_slash_alone_errors(self):
-        # Unlike `--prefix ''` alone (frozen help-and-exit-0 quirk), `/` is truthy
-        # before stripping, so this hits the requires-files-or-list validation error.
+        # Unlike `--prefix ''` alone (which counts as bare, so its outcome depends on
+        # config state), `/` is truthy before stripping, so this hits the
+        # requires-files-or-list validation error.
         with pytest.raises(SystemExit) as risen:
             parse_args(["--prefix", "/"])
         assert risen.value.code == 2
@@ -472,6 +473,7 @@ class TestMain:
             remote_name=remote_name,
             target=target,
             paths=list(map(Path, files)),
+            bare=False,
         )
 
     def test_bad_config_created(self, mock_parse_args, mock_load_config, mock_aws_class):
@@ -483,6 +485,7 @@ class TestMain:
 
         assert risen.value.code == 1
         mock_print.assert_any_call("Created config file at the path below. You must edit it before use.")
+        mock_print.assert_any_call("Full setup tutorial: https://sobe.readthedocs.io/en/latest/tutorial.html")
 
     def test_bad_config_existing_unconfigured(self, mock_parse_args, mock_load_config, mock_aws_class):
         mock_parse_args.return_value = self._mock_args()
@@ -495,6 +498,7 @@ class TestMain:
         mock_print.assert_any_call(
             "The config file at the path below is not configured yet. You must edit it before use."
         )
+        mock_print.assert_any_call("Full setup tutorial: https://sobe.readthedocs.io/en/latest/tutorial.html")
 
     def test_config_error_on_load(self, mock_parse_args, mock_load_config, mock_aws_class):
         error = ConfigError("Cannot parse config.toml")
@@ -733,3 +737,67 @@ class TestMain:
         _mock_write.assert_called_once_with("https://example.com/2025/remote.txt ...")
         mock_aws_class().upload.assert_called_once_with("2025/", Path("local.txt"), "remote.txt", content_type=None)
         _mock_print.assert_called_once_with("ok.")
+
+
+class TestMainArgsBeforeConfig:
+    """main() parses arguments before any config access; bare `sobe` still runs the config phase."""
+
+    def test_help_never_touches_config(self, monkeypatch, capsys):
+        mock_load_config = Mock(side_effect=AssertionError("load_config should not be called"))
+        monkeypatch.setattr("sobe.main.load_config", mock_load_config)
+        monkeypatch.setattr(sys, "argv", ["sobe", "--help"])
+
+        with pytest.raises(SystemExit) as risen:
+            main()
+
+        assert risen.value.code == 0
+        mock_load_config.assert_not_called()
+        assert "usage:" in capsys.readouterr().out
+
+    def test_version_never_touches_config(self, monkeypatch, capsys):
+        mock_load_config = Mock(side_effect=AssertionError("load_config should not be called"))
+        monkeypatch.setattr("sobe.main.load_config", mock_load_config)
+        monkeypatch.setattr(sys, "argv", ["sobe", "--version"])
+
+        with pytest.raises(SystemExit) as risen:
+            main()
+
+        assert risen.value.code == 0
+        mock_load_config.assert_not_called()
+        assert capsys.readouterr().out.startswith("sobe ")
+
+    def test_argument_error_preempts_config_access(self, monkeypatch):
+        # --prefix without files or --list is a validation error; no template may be written.
+        mock_load_config = Mock(side_effect=AssertionError("load_config should not be called"))
+        monkeypatch.setattr("sobe.main.load_config", mock_load_config)
+        monkeypatch.setattr(sys, "argv", ["sobe", "--prefix", "2024"])
+
+        with pytest.raises(SystemExit) as risen:
+            main()
+
+        assert risen.value.code == 2
+        mock_load_config.assert_not_called()
+
+    def test_bare_enters_config_phase(self, monkeypatch):
+        mock_load_config = Mock(side_effect=MustEditConfig(Path(), created=True))
+        monkeypatch.setattr("sobe.main.load_config", mock_load_config)
+        monkeypatch.setattr(sys, "argv", ["sobe"])
+
+        with patch("sobe.main.print") as mock_print, pytest.raises(SystemExit) as risen:
+            main()
+
+        assert risen.value.code == 1
+        mock_print.assert_any_call("Created config file at the path below. You must edit it before use.")
+        mock_print.assert_any_call("Full setup tutorial: https://sobe.readthedocs.io/en/latest/tutorial.html")
+
+    def test_bare_with_configured_config_prints_help(self, monkeypatch, capsys):
+        mock_load_config = Mock(return_value=(make_config(), None))
+        monkeypatch.setattr("sobe.main.load_config", mock_load_config)
+        monkeypatch.setattr(sys, "argv", ["sobe"])
+
+        with pytest.raises(SystemExit) as risen:
+            main()
+
+        assert risen.value.code == 0
+        mock_load_config.assert_called_once()
+        assert "usage:" in capsys.readouterr().out

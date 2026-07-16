@@ -8,7 +8,7 @@ Full documentation: https://sobe.readthedocs.io/en/latest/
 
 It will upload any files you give it to your bucket, defaulting to a current year directory, because that's the only easy way to organize chaos.
 
-"Sobe" is Portuguese for "take it up" (in the imperative), as in "upload".
+"Sobe" (pronounced SAW-bee) is Portuguese for "take it up" (in the imperative), as in "upload".
 
 ## Installation
 

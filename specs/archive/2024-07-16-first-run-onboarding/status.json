@@ -1,9 +1,9 @@
 {
   "feature": "first-run-onboarding",
-  "status": "ready",
-  "current_step": 0,
+  "status": "complete",
+  "current_step": 10,
   "total_steps": 10,
-  "completed_steps": [],
+  "completed_steps": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
   "errors": [],
   "notes": "Phase 1 + Phase 2 + Phase 3 complete. Round 1: 1 blocker + 1 warning. Round 2 (fresh-eyes): 0 blockers + 4 warnings. All applied. 2026-07-15 user scope change: bare sobe keeps today's first-run behavior (args.bare flag + _build_parser extraction); R1-B1 doc corrections reverted, R2-W1 dropped, Step 7b removed. Round 3 verification of revised design: 1 blocker + 3 warnings (stale pre-revision text), all applied; design verified sound."
 }

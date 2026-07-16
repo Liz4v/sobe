@@ -6,7 +6,7 @@ A simple command-line tool to upload files to an AWS S3 bucket, typically one se
 
 It will upload any files you give it to your bucket, defaulting to a current year directory, because that's the only easy way to organize chaos.
 
-"Sobe" is Portuguese for "take it up" (in the imperative), as in "upload".
+"Sobe" (pronounced SAW-bee) is Portuguese for "take it up" (in the imperative), as in "upload".
 
 Contents:
 
@@ -14,6 +14,7 @@ Contents:
 :maxdepth: 2
 :caption: User Guide
 
+tutorial
 usage
 configuration
 ```

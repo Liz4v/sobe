@@ -2,6 +2,8 @@
 
 ## Installation
 
+For a full walkthrough including AWS account, bucket, and CloudFront setup, see the [Tutorial](tutorial.md).
+
 Use [uv](https://docs.astral.sh/uv/) to manage it:
 
 ```console
@@ -20,6 +22,7 @@ Run it once to create a default configuration file:
 $ sobe
 Created config file at the path below. You must edit it before use.
 /home/user/.config/sobe/config.toml
+Full setup tutorial: https://sobe.readthedocs.io/en/latest/tutorial.html
 ```
 
 Edit the configuration file as described in the [Configuration](configuration.md) section, then re-run the command. (If the file already exists but is still unconfigured, the message says so instead of claiming it was created.)
