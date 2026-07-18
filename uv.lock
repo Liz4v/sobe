@@ -695,7 +695,7 @@ wheels = [
 
 [[package]]
 name = "sobe"
-version = "0.4.1"
+version = "1.0.0rc1"
 source = { editable = "." }
 dependencies = [
     { name = "boto3" },
