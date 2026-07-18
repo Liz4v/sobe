@@ -107,6 +107,10 @@ class TestParseArgs:
         with pytest.raises(SystemExit):
             parse_args(["--list", "file1.txt"])  # filtering not supported yet
 
+    def test_parse_args_list_with_invalidate_error(self):
+        with pytest.raises(SystemExit):
+            parse_args(["--list", "--invalidate"])
+
     def test_parse_args_content_type_with_files(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)

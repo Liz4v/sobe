@@ -144,6 +144,8 @@ def parse_args(argv=None) -> argparse.Namespace:
     elif args.list:
         if args.delete:
             parser.error("--list and --delete cannot be used at the same time")
+        if args.invalidate:
+            parser.error("--list and --invalidate cannot be used at the same time")
         if args.files:
             parser.error("--list does not support file filtering yet")
     elif args.delete:
