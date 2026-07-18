@@ -90,7 +90,7 @@ class TestTarget:
 
     def test_non_table_target_error(self):
         with pytest.raises(config.ConfigError, match=r'Target "main" must be a table.*\[target\.main\]'):
-            config.Target.from_dict("main", "oops")
+            config.Target.from_dict("main", "oops")  # ty: ignore[invalid-argument-type]
 
     def test_missing_storage_error(self):
         with pytest.raises(config.ConfigError, match=r'Target "main" has no storage'):

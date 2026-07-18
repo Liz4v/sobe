@@ -14,7 +14,7 @@ from sobe.aws import AWS
 from sobe.config import ConfigError, MustEditConfig, load_config
 
 write = functools.partial(print, flush=True, end="")
-print = functools.partial(print, flush=True)  # type: ignore
+print = functools.partial(print, flush=True)
 warnings.filterwarnings("ignore", category=urllib3.exceptions.InsecureRequestWarning)
 
 TUTORIAL_URL = "https://sobe.readthedocs.io/en/latest/tutorial.html"

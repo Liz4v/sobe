@@ -60,6 +60,7 @@ class AWS:
 
         Only valid on a target with a cache; the caller checks before dispatching here.
         """
+        assert self.target.cache is not None and self._cloudfront is not None
         ref = datetime.datetime.now().astimezone().isoformat()
         batch = {"Paths": {"Quantity": 1, "Items": ["/*"]}, "CallerReference": ref}
         distribution = self.target.cache.distribution
