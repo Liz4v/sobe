@@ -1,0 +1,9 @@
+{
+  "feature": "multi-target",
+  "status": "complete",
+  "current_step": 21,
+  "total_steps": 21,
+  "completed_steps": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21],
+  "errors": [],
+  "notes": "Phase 4 (coder) complete 2026-07-12: all 21 steps done. 127 tests pass at 99.23% coverage (gate 95%), ruff clean, Sphinx docs build, docs ASCII-only. Prior phases: Phase 1-3 with two-round critic (Round 1: 3 blockers + 7 warnings; Round 2 fresh-eyes: 0 blockers + 4 warnings; all applied). User amendment 2026-07-12 (reverses critic note N1-r2): an empty --target is treated as not given via plain truthiness in parse_args and Config.select, so `-t \"\"` falls back to help/default selection instead of erroring."
+}
